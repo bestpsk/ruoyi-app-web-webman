@@ -1,0 +1,31 @@
+{
+  "name": "馥辰国际",
+  "appid": "__UNI__FCGJ001",
+  "description": "馥辰国际移动端应用",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "vueVersion": "3",
+  "h5": {
+    "devServer": {
+      "port": 9091,
+      "proxy": {
+        "/prod-api": {
+          "target": "http://localhost:8787",
+          "changeOrigin": true,
+          "pathRewrite": { "^/prod-api": "" }
+        }
+      }
+    },
+    "router": {
+      "mode": "hash"
+    }
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true
+  }
+}
