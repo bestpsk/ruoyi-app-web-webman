@@ -26,7 +26,17 @@
   "require": {
     "php": ">=8.1",
     "workerman/webman-framework": "^2.1",
-    "monolog/monolog": "^2.0"
+    "monolog/monolog": "^2.0",
+    "webman/database": "^2.1",
+    "illuminate/pagination": "^12.57",
+    "illuminate/events": "^12.57",
+    "symfony/var-dumper": "^7.4",
+    "webman/redis": "^2.1",
+    "predis/predis": "^3.4",
+    "firebase/php-jwt": "^7.0",
+    "guzzlehttp/guzzle": "^7.10",
+    "vlucas/phpdotenv": "^5.6",
+    "phpoffice/phpspreadsheet": "*"
   },
   "suggest": {
     "ext-event": "For better performance. "
@@ -48,12 +58,6 @@
     ],
     "pre-package-uninstall": [
       "support\\Plugin::uninstall"
-    ],
-    "post-create-project-cmd": [
-      "support\\Setup::run"
-    ],
-    "setup-webman": [
-      "support\\Setup::run"
     ]
   },
   "minimum-stability": "dev",

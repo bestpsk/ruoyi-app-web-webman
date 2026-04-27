@@ -1,0 +1,24 @@
+<?php
+
+namespace app\model;
+
+use support\Model;
+
+class ${className} extends Model
+{
+    protected $table = '${tableName}';
+
+#if ($pkColumn && $pkColumn.column_name != 'id')
+    protected $primaryKey = '${pkColumn.column_name}';
+#end
+
+    public $timestamps = false;
+
+    protected $fillable = [
+#foreach ($columns as $column)
+#if ($column.is_pk != '1' || $column.is_increment != '1')
+        '${column.column_name}',
+#end
+#end
+    ];
+}

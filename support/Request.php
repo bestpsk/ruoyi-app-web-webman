@@ -20,5 +20,5 @@ namespace support;
  */
 class Request extends \Webman\Http\Request
 {
-
+    public $loginUser = null;
 }
