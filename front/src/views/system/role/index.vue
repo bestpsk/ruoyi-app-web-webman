@@ -140,48 +140,75 @@
       />
 
       <!-- 添加或修改角色配置对话框 -->
-      <el-dialog :title="title" v-model="open" width="500px" append-to-body>
+      <el-dialog :title="title" v-model="open" width="1000px" top="1vh" append-to-body>
          <el-form ref="roleRef" :model="form" :rules="rules" label-width="100px">
-            <el-form-item label="角色名称" prop="roleName">
-               <el-input v-model="form.roleName" placeholder="请输入角色名称" />
-            </el-form-item>
-            <el-form-item prop="roleKey">
-               <template #label>
-                  <span>
-                     <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasRole('admin')`)" placement="top">
-                        <el-icon><question-filled /></el-icon>
-                     </el-tooltip>
-                     权限字符
-                  </span>
-               </template>
-               <el-input v-model="form.roleKey" placeholder="请输入权限字符" />
-            </el-form-item>
-            <el-form-item label="角色顺序" prop="roleSort">
-               <el-input-number v-model="form.roleSort" controls-position="right" :min="0" />
-            </el-form-item>
-            <el-form-item label="状态">
-               <el-radio-group v-model="form.status">
-                  <el-radio
-                     v-for="dict in sys_normal_disable"
-                     :key="dict.value"
-                     :value="dict.value"
-                  >{{ dict.label }}</el-radio>
-               </el-radio-group>
-            </el-form-item>
+            <el-row :gutter="20">
+               <el-col :span="12">
+                  <el-form-item label="角色名称" prop="roleName">
+                     <el-input v-model="form.roleName" placeholder="请输入角色名称" />
+                  </el-form-item>
+               </el-col>
+               <el-col :span="12">
+                  <el-form-item prop="roleKey">
+                     <template #label>
+                        <span>
+                           <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasRole('admin')`)" placement="top">
+                              <el-icon><question-filled /></el-icon>
+                           </el-tooltip>
+                           权限字符
+                        </span>
+                     </template>
+                     <el-input v-model="form.roleKey" placeholder="请输入权限字符" />
+                  </el-form-item>
+               </el-col>
+            </el-row>
+            <el-row :gutter="20">
+               <el-col :span="12">
+                  <el-form-item label="角色顺序" prop="roleSort">
+                     <el-input-number v-model="form.roleSort" controls-position="right" :min="0" style="width: 100%" />
+                  </el-form-item>
+               </el-col>
+               <el-col :span="12">
+                  <el-form-item label="状态">
+                     <el-radio-group v-model="form.status">
+                        <el-radio
+                           v-for="dict in sys_normal_disable"
+                           :key="dict.value"
+                           :value="dict.value"
+                        >{{ dict.label }}</el-radio>
+                     </el-radio-group>
+                  </el-form-item>
+               </el-col>
+            </el-row>
             <el-form-item label="菜单权限">
                <el-checkbox v-model="menuExpand" @change="handleCheckedTreeExpand($event, 'menu')">展开/折叠</el-checkbox>
                <el-checkbox v-model="menuNodeAll" @change="handleCheckedTreeNodeAll($event, 'menu')">全选/全不选</el-checkbox>
                <el-checkbox v-model="form.menuCheckStrictly" @change="handleCheckedTreeConnect($event, 'menu')">父子联动</el-checkbox>
                <el-tree
                   class="tree-border"
-                  :data="menuOptions"
+                  :data="menuTreeOptions"
                   show-checkbox
                   ref="menuRef"
                   node-key="id"
                   :check-strictly="!form.menuCheckStrictly"
                   empty-text="加载中，请稍候"
                   :props="{ label: 'label', children: 'children' }"
-               ></el-tree>
+               >
+                  <template #default="{ node, data }">
+                     <span class="custom-tree-node">
+                        <span class="menu-label">{{ node.label }}</span>
+                        <span v-if="getButtonPermissions(data.id).length > 0" class="button-permissions">
+                           <el-checkbox
+                              v-for="btn in getButtonPermissions(data.id)"
+                              :key="btn.id"
+                              :model-value="buttonCheckState[btn.id] || false"
+                              @update:model-value="(val) => buttonCheckState[btn.id] = val"
+                              @click.stop
+                           >{{ btn.label }}</el-checkbox>
+                        </span>
+                     </span>
+                  </template>
+               </el-tree>
             </el-form-item>
             <el-form-item label="备注">
                <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
@@ -268,6 +295,7 @@ const deptOptions = ref([])
 const openDataScope = ref(false)
 const menuRef = ref(null)
 const deptRef = ref(null)
+const buttonCheckState = ref({})
 
 /** 数据范围选项*/
 const dataScopeOptions = ref([
@@ -401,6 +429,7 @@ function reset() {
   menuNodeAll.value = false
   deptExpand.value = true
   deptNodeAll.value = false
+  buttonCheckState.value = {}
   form.value = {
     roleId: undefined,
     roleName: undefined,
@@ -435,12 +464,29 @@ function handleUpdate(row) {
     open.value = true
     nextTick(() => {
       roleMenu.then((res) => {
-        let checkedKeys = res.checkedKeys
-        checkedKeys.forEach((v) => {
+        const menuIds = []
+        const buttonIds = []
+        res.checkedKeys.forEach(id => {
+          const node = findNodeById(menuOptions.value, id)
+          if (node) {
+            const parentNode = findParentNode(menuOptions.value, id)
+            if (parentNode && isButtonGroup(parentNode.children)) {
+              buttonIds.push(id)
+            } else {
+              menuIds.push(id)
+            }
+          }
+        })
+        menuIds.forEach(v => {
           nextTick(() => {
             menuRef.value.setChecked(v, true, false)
           })
         })
+        const btnState = {}
+        buttonIds.forEach(id => {
+          btnState[id] = true
+        })
+        buttonCheckState.value = btnState
       })
     })
   })
@@ -496,29 +542,23 @@ function handleCheckedTreeConnect(value, type) {
   }
 }
 
-/** 所有菜单节点数据 */
-function getMenuAllCheckedKeys() {
-  // 目前被选中的菜单节点
-  let checkedKeys = menuRef.value.getCheckedKeys()
-  // 半选中的菜单节点
-  let halfCheckedKeys = menuRef.value.getHalfCheckedKeys()
-  checkedKeys.unshift.apply(checkedKeys, halfCheckedKeys)
-  return checkedKeys
-}
-
 /** 提交按钮 */
 function submitForm() {
   proxy.$refs["roleRef"].validate(valid => {
     if (valid) {
+      const menuKeys = menuRef.value.getCheckedKeys()
+      const halfKeys = menuRef.value.getHalfCheckedKeys()
+      const buttonKeys = Object.keys(buttonCheckState.value)
+        .filter(id => buttonCheckState.value[id])
+        .map(id => Number(id))
+      form.value.menuIds = [...new Set([...menuKeys, ...halfKeys, ...buttonKeys])]
       if (form.value.roleId != undefined) {
-        form.value.menuIds = getMenuAllCheckedKeys()
         updateRole(form.value).then(() => {
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        form.value.menuIds = getMenuAllCheckedKeys()
         addRole(form.value).then(() => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
@@ -580,5 +620,82 @@ function cancelDataScope() {
   reset()
 }
 
+function isButtonGroup(children) {
+  return children.every(child => !child.children || child.children.length === 0)
+}
+
+function filterButtonNodes(nodes) {
+  if (!nodes) return []
+  return nodes.map(node => {
+    if (node.children && node.children.length > 0) {
+      const hasNestedMenu = node.children.some(child => child.children && child.children.length > 0)
+      if (hasNestedMenu) {
+        return { ...node, children: filterButtonNodes(node.children) }
+      } else {
+        return { ...node, children: [] }
+      }
+    }
+    return node
+  })
+}
+
+function getButtonPermissions(parentId) {
+  const parent = findNodeById(menuOptions.value, parentId)
+  if (parent && parent.children && isButtonGroup(parent.children)) {
+    return parent.children
+  }
+  return []
+}
+
+function findNodeById(nodes, id) {
+  for (const node of nodes) {
+    if (node.id === id) return node
+    if (node.children) {
+      const found = findNodeById(node.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+function findParentNode(nodes, targetId, parent = null) {
+  for (const node of nodes) {
+    if (node.id === targetId) return parent
+    if (node.children) {
+      const found = findParentNode(node.children, targetId, node)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const menuTreeOptions = computed(() => filterButtonNodes(menuOptions.value))
+
 getList()
 </script>
+
+<style scoped>
+.custom-tree-node {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding-right: 8px;
+}
+.menu-label {
+  min-width: 80px;
+}
+.button-permissions {
+  margin-left: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.button-permissions :deep(.el-checkbox) {
+  margin-right: 0;
+  height: 24px;
+}
+.tree-border {
+  max-height: 780px;
+  overflow-y: auto;
+}
+</style>
