@@ -134,3 +134,79 @@ export function deptTreeSelect() {
     method: 'get'
   })
 }
+
+// 查询员工详情
+export function getUserDetail(userId) {
+  return request({
+    url: '/system/user/detail/' + userId,
+    method: 'get'
+  })
+}
+
+// 新增员工详情
+export function addUserDetail(data) {
+  return request({
+    url: '/system/user/detail',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改员工详情
+export function updateUserDetail(data) {
+  return request({
+    url: '/system/user/detail',
+    method: 'put',
+    data: data
+  })
+}
+
+// 查询薪资类型列表
+export function listSalaryType() {
+  return request({
+    url: '/hr/salary/type/list',
+    method: 'get'
+  })
+}
+
+// 查询用户薪资配置列表
+export function listUserSalary(userId) {
+  return request({
+    url: '/hr/salary/user/' + userId,
+    method: 'get'
+  })
+}
+
+// 查询薪资配置详细
+export function getSalary(salaryId) {
+  return request({
+    url: '/hr/salary/' + salaryId,
+    method: 'get'
+  })
+}
+
+// 新增薪资配置
+export function addSalary(data) {
+  return request({
+    url: '/hr/salary',
+    method: 'post',
+    data: data
+  })
+}
+
+// 修改薪资配置
+export function updateSalary(data) {
+  return request({
+    url: '/hr/salary',
+    method: 'put',
+    data: data
+  })
+}
+
+// 删除薪资配置
+export function delSalary(salaryIds) {
+  return request({
+    url: '/hr/salary/' + salaryIds,
+    method: 'delete'
+  })
+}

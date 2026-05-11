@@ -41,7 +41,7 @@
       <el-dropdown @command="handleCommand" class="avatar-container right-menu-item hover-effect" trigger="hover">
         <div class="avatar-wrapper">
           <img :src="userStore.avatar" class="user-avatar" />
-          <span class="user-nickname"> {{ userStore.nickName }} </span>
+          <span class="user-nickname"> {{ userStore.realName }} </span>
         </div>
         <template #dropdown>
           <el-dropdown-menu>

@@ -14,7 +14,7 @@ const useUserStore = defineStore(
       token: getToken(),
       id: '',
       name: '',
-      nickName: '',
+      realName: '',
       avatar: '',
       roles: [],
       permissions: []
@@ -54,7 +54,7 @@ const useUserStore = defineStore(
             }
             this.id = user.userId
             this.name = user.userName
-            this.nickName = user.nickName
+            this.realName = user.realName
             this.avatar = avatar
             cache.session.set('pwrChrtype', res.pwdChrtype)
             /* 初始密码提示 */

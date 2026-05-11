@@ -7,6 +7,10 @@
   "transformPx": false,
   "vueVersion": "3",
   "h5": {
+    "sdkKey": {
+      "map": "fa588d6bc9fbc9dce1f0c379e40f9faa",
+      "securityJsCode": "19ef226bdd6e4a6276d45ed1e5cb9a475"
+    },
     "devServer": {
       "port": 9091,
       "proxy": {
@@ -26,6 +30,11 @@
     "setting": {
       "urlCheck": false
     },
-    "usingComponents": true
+    "usingComponents": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "你的位置信息将用于考勤打卡"
+      }
+    }
   }
 }

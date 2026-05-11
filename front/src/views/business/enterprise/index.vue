@@ -7,9 +7,6 @@
       <el-form-item label="老板姓名" prop="bossName">
         <el-input v-model="queryParams.bossName" placeholder="请输入老板姓名" clearable style="width: 160px" @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="联系电话" prop="phone">
-        <el-input v-model="queryParams.phone" placeholder="请输入联系电话" clearable style="width: 160px" @keyup.enter="handleQuery" />
-      </el-form-item>
       <el-form-item label="企业类型" prop="enterpriseType">
         <el-select v-model="queryParams.enterpriseType" placeholder="请选择企业类型" clearable style="width: 160px">
           <el-option v-for="dict in biz_enterprise_type" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -38,7 +35,7 @@
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="enterpriseList" @selection-change="handleSelectionChange" style="width: 100%">
+    <el-table v-loading="loading" :data="enterpriseList" @selection-change="handleSelectionChange" @row-click="handleRowClick" style="width: 100%" class="pointer">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="企业名称" align="center" prop="enterpriseName" :show-overflow-tooltip="true" min-width="90" />
       <el-table-column label="老板姓名" align="center" prop="bossName" min-width="70" />
@@ -183,7 +180,7 @@
       <el-table :data="planList" v-loading="planListLoading">
         <el-table-column label="方案编号" prop="planNo" show-overflow-tooltip />
         <el-table-column label="方案名称" prop="planName" show-overflow-tooltip />
-        <el-table-column label="分成比例" prop="commissionRate" align="center">
+        <el-table-column label="回款比例" prop="commissionRate" align="center">
           <template #default="scope">{{ scope.row.commissionRate }}%</template>
         </el-table-column>
         <el-table-column label="方案金额" prop="planAmount" align="right" />
@@ -466,6 +463,34 @@
         <el-button @click="shipmentOpen = false">取 消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog title="企业详情" v-model="detailOpen" width="700px" append-to-body>
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="企业名称">{{ detailForm.enterpriseName }}</el-descriptions-item>
+        <el-descriptions-item label="老板姓名">{{ detailForm.bossName }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ detailForm.phone }}</el-descriptions-item>
+        <el-descriptions-item label="企业类型">
+          <dict-tag :options="biz_enterprise_type" :value="detailForm.enterpriseType" />
+        </el-descriptions-item>
+        <el-descriptions-item label="地址" :span="2">{{ detailForm.address || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="门店数量">{{ detailForm.storeCount }}</el-descriptions-item>
+        <el-descriptions-item label="年业绩">{{ detailForm.annualPerformance }}</el-descriptions-item>
+        <el-descriptions-item label="企业级别">
+          <dict-tag :options="biz_enterprise_level" :value="detailForm.enterpriseLevel" />
+        </el-descriptions-item>
+        <el-descriptions-item label="服务人">{{ detailForm.serverUserName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="开始合作">{{ detailForm.cooperationStartDate || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="结束合作">{{ detailForm.cooperationEndDate || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <dict-tag :options="sys_normal_disable" :value="detailForm.status" />
+        </el-descriptions-item>
+        <el-descriptions-item label="方案数量">{{ detailForm.planCount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ detailForm.remark || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailOpen = false">关 闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -497,6 +522,8 @@ const planDetailOpen = ref(false)
 const currentPlan = ref({})
 const currentEnterprise = ref({})
 const shipmentOpen = ref(false)
+const detailOpen = ref(false)
+const detailForm = ref({})
 const productOptions = ref([])
 const serverUserOptions = ref([])
 
@@ -674,6 +701,17 @@ function handleViewPlans(row) {
     planList.value = res.rows
     planListLoading.value = false
   })
+}
+
+function handleViewDetail(row) {
+  getEnterprise(row.enterpriseId).then(response => {
+    detailForm.value = response.data
+    detailOpen.value = true
+  })
+}
+
+function handleRowClick(row) {
+  handleViewDetail(row)
 }
 
 function handleAddPlan(row) {
@@ -854,3 +892,9 @@ function submitShipmentForm() {
 
 getList()
 </script>
+
+<style scoped>
+.pointer :deep(.el-table__body tr) {
+  cursor: pointer;
+}
+</style>

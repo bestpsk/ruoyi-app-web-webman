@@ -32,7 +32,7 @@
       <el-table-column label="方案编号" prop="planNo" min-width="120" show-overflow-tooltip />
       <el-table-column label="企业名称" prop="enterpriseName" min-width="120" show-overflow-tooltip />
       <el-table-column label="方案名称" prop="planName" min-width="150" show-overflow-tooltip />
-      <el-table-column label="分成比例" prop="commissionRate" align="center" width="90">
+      <el-table-column label="回款比例" prop="commissionRate" align="center" width="90">
         <template #default="scope">{{ scope.row.commissionRate }}%</template>
       </el-table-column>
       <el-table-column label="方案金额" prop="planAmount" align="right" width="100" />
@@ -126,7 +126,7 @@
         </el-row>
         <el-divider content-position="left">配赠明细</el-divider>
         <el-table :data="planForm.items" border style="width: 100%" size="small">
-          <el-table-column label="货品名称" min-width="150">
+          <el-table-column label="货品名称" min-width="130">
             <template #default="scope">
               <el-select v-model="scope.row.productId" placeholder="选择货品" filterable remote :remote-method="searchProduct" @focus="() => searchProduct('')" @change="(val) => onProductSelect(scope.$index, val)" style="width: 100%">
                 <el-option v-for="p in productOptions" :key="p.productId" :label="p.productName" :value="p.productId" />
@@ -239,21 +239,26 @@
       </el-table>
     </el-dialog>
 
-    <el-dialog title="新建出货单" v-model="shipmentOpen" width="1150px" append-to-body>
+    <el-dialog title="新建出货单" v-model="shipmentOpen" width="1350px" append-to-body>
       <el-form ref="shipmentRef" :model="shipmentForm" :rules="shipmentRules" label-width="100px">
-        <el-row>
-          <el-col :span="12">
+        <el-row :gutter="20">
+          <el-col :span="8">
             <el-form-item label="关联方案">
               <el-input v-model="shipmentForm.planName" disabled />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="企业名称">
               <el-input v-model="shipmentForm.enterpriseName" disabled />
             </el-form-item>
           </el-col>
+          <el-col :span="8">
+            <el-form-item label="回款比例">
+              <el-input v-model="shipmentForm.commissionRate" disabled />
+            </el-form-item>
+          </el-col>
         </el-row>
-        <el-row>
+        <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="收货人" prop="contactPerson">
               <el-input v-model="shipmentForm.contactPerson" placeholder="收货人" />
@@ -272,7 +277,7 @@
         </el-row>
         <el-divider content-position="left">出货明细</el-divider>
         <el-table :data="shipmentForm.items" border style="width: 100%" size="small">
-          <el-table-column label="货品名称" min-width="150">
+          <el-table-column label="货品名称" min-width="120">
             <template #default="scope">
               <el-select v-if="!scope.row.planItemId" v-model="scope.row.productId" placeholder="选择货品" filterable remote :remote-method="searchShipmentProduct" @focus="() => searchShipmentProduct('')" @change="(val) => onShipmentProductSelect(scope.$index, val)" style="width: 100%">
                 <el-option v-for="p in shipmentProductOptions" :key="p.productId" :label="p.productName" :value="p.productId" />
@@ -283,9 +288,9 @@
           <el-table-column label="供货商" width="120">
             <template #default="scope">{{ scope.row.supplierName || '-' }}</template>
           </el-table-column>
-          <el-table-column label="单位类型" width="110" align="center">
+          <el-table-column label="单位类型" width="150" align="center">
             <template #default="scope">
-              <el-select v-if="!scope.row.planItemId" v-model="scope.row.unitType" @change="onShipmentUnitTypeChange(scope.$index)" size="small" style="width: 100%">
+              <el-select v-if="!scope.row.planItemId" v-model="scope.row.unitType" @change="onShipmentUnitTypeChange(scope.$index)" style="width: 100%">
                 <el-option label="主单位-整" value="1" />
                 <el-option label="副单位-拆" value="2" />
               </el-select>
@@ -298,20 +303,20 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="数量" width="80">
+          <el-table-column label="数量" width="100">
             <template #default="scope">
-              <el-input-number v-model="scope.row.quantity" :min="1" :max="scope.row.maxQuantity || 99999" controls-position="right" size="small" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
+              <el-input-number v-model="scope.row.quantity" :min="1" :max="scope.row.maxQuantity || 99999" controls-position="right" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
             </template>
           </el-table-column>
-          <el-table-column label="规格" width="60">
+          <el-table-column label="规格" width="70" align="center">
             <template #default="scope">{{ scope.row.spec || '-' }}</template>
           </el-table-column>
           <el-table-column label="单价" width="80" align="right">
             <template #default="scope">{{ scope.row.salePrice || 0 }}</template>
           </el-table-column>
-          <el-table-column label="折扣单价" width="100">
+          <el-table-column label="折扣单价" width="150">
             <template #default="scope">
-              <el-input-number v-model="scope.row.discountPrice" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
+              <el-input-number v-model="scope.row.discountPrice" :precision="2" :min="0" controls-position="right" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
             </template>
           </el-table-column>
           <el-table-column label="总金额" width="90" align="right">
@@ -577,6 +582,7 @@ function handleCreateShipment(row) {
       planName: plan.planName,
       enterpriseId: plan.enterpriseId,
       enterpriseName: plan.enterprise?.enterpriseName || '',
+      commissionRate: plan.commissionRate ? (plan.commissionRate + '%') : '',
       contactPerson: plan.enterprise?.bossName || '',
       contactPhone: plan.enterprise?.phone || '',
       shippingAddress: plan.enterprise?.address || '',

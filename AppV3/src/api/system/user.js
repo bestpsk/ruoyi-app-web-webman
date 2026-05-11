@@ -1,6 +1,14 @@
 import upload from '@/utils/upload'
 import request from '@/utils/request'
 
+export function listUser(params) {
+  return request({
+    url: '/system/user/list',
+    method: 'get',
+    params
+  })
+}
+
 export function updateUserPwd(oldPassword, newPassword) {
   const data = { oldPassword, newPassword }
   return request({

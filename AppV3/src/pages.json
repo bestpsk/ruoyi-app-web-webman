@@ -20,7 +20,21 @@
     { "path": "pages/mine/help/index", "style": { "navigationBarTitleText": "常见问题" } },
     { "path": "pages/mine/about/index", "style": { "navigationBarTitleText": "关于我们" } },
     { "path": "pages/common/webview/index", "style": { "navigationBarTitleText": "浏览网页" } },
-    { "path": "pages/common/textview/index", "style": { "navigationBarTitleText": "浏览文本" } }
+    { "path": "pages/common/textview/index", "style": { "navigationBarTitleText": "浏览文本" } },
+    { "path": "pages/attendance/index", "style": { "navigationBarTitleText": "考勤打卡" } },
+    { "path": "pages/attendance/record", "style": { "navigationBarTitleText": "打卡记录" } },
+    { "path": "pages/business/enterprise/index", "style": { "navigationBarTitleText": "企业管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/enterprise/form", "style": { "navigationBarTitleText": "企业信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/store/index", "style": { "navigationBarTitleText": "门店管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/store/form", "style": { "navigationBarTitleText": "门店信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/schedule/index", "style": { "navigationBarTitleText": "行程安排", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/schedule/form", "style": { "navigationBarTitleText": "行程信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/sales/index", "style": { "navigationBarTitleText": "销售开单", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/sales/order", "style": { "navigationBarTitleText": "客户开单", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/sales/operation", "style": { "navigationBarTitleText": "添加操作", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/operation/index", "style": { "navigationBarTitleText": "项目操作", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/order/index", "style": { "navigationBarTitleText": "订单管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/order/detail", "style": { "navigationBarTitleText": "订单详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } }
   ],
   "tabBar": {
     "color": "#000000",

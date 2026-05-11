@@ -13,7 +13,7 @@
           :disable-transitions="true"
           :key="item.value + ''"
           :index="index"
-          :type="item.elTagType"
+          :type="item.elTagType && ['primary', 'success', 'info', 'warning', 'danger'].includes(item.elTagType) ? item.elTagType : 'primary'"
           :class="item.elTagClass"
         >{{ item.label + " " }}</el-tag>
       </template>

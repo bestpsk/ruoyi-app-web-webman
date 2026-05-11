@@ -51,7 +51,7 @@
               <a class="link-type" style="cursor:pointer" @click="handleViewData(scope.row)">{{ scope.row.userName }}</a>
             </template>
          </el-table-column>
-          <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true" />
+          <el-table-column label="用户姓名" align="center" key="realName" prop="realName" v-if="columns.realName.visible" :show-overflow-tooltip="true" />
           <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120" />
           <el-table-column label="状态" align="center" key="status" v-if="columns.status.visible">
@@ -91,12 +91,87 @@
     </div>
 
     <!-- 添加或修改用户配置对话框 -->
-    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form :model="form" :rules="rules" ref="userRef" label-width="80px">
+    <el-dialog :title="title" v-model="open" width="800px" append-to-body>
+      <el-tabs v-model="activeTab" v-if="form.userId != undefined">
+        <el-tab-pane label="基本信息" name="basic">
+          <el-form :model="form" :rules="rules" ref="userRef" label-width="80px">
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="用户姓名" prop="realName">
+                  <el-input v-model="form.realName" placeholder="请输入用户姓名" maxlength="30" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="归属部门" prop="deptId">
+                  <el-tree-select v-model="form.deptId" :data="enabledDeptOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择归属部门" clearable check-strictly />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="手机号码" prop="phonenumber">
+                  <el-input v-model="form.phonenumber" placeholder="请输入手机号码" maxlength="11" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="邮箱" prop="email">
+                  <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="用户性别">
+                  <el-select v-model="form.sex" placeholder="请选择">
+                    <el-option v-for="dict in sys_user_sex" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="状态">
+                  <el-radio-group v-model="form.status">
+                    <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="岗位">
+                  <el-select v-model="form.postIds" multiple placeholder="请选择">
+                    <el-option v-for="item in postOptions" :key="item.postId" :label="item.postName" :value="item.postId" :disabled="item.status == 1"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="角色">
+                  <el-select v-model="form.roleIds" multiple placeholder="请选择">
+                    <el-option v-for="item in roleOptions" :key="item.roleId" :label="item.roleName" :value="item.roleId" :disabled="item.status == 1"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="备注">
+                  <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="员工详情" name="detail">
+          <user-detail ref="userDetailRef" :user-id="form.userId" />
+        </el-tab-pane>
+        <el-tab-pane label="薪资配置" name="salary">
+          <user-salary ref="userSalaryRef" :user-id="form.userId" />
+        </el-tab-pane>
+      </el-tabs>
+      <el-form :model="form" :rules="rules" ref="userRef" label-width="80px" v-else>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="用户昵称" prop="nickName">
-              <el-input v-model="form.nickName" placeholder="请输入用户昵称" maxlength="30" />
+            <el-form-item label="用户姓名" prop="nickName">
+              <el-input v-model="form.nickName" placeholder="请输入用户姓名" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -119,12 +194,12 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item v-if="form.userId == undefined" label="用户名称" prop="userName">
+            <el-form-item label="用户名称" prop="userName">
               <el-input v-model="form.userName" placeholder="请输入用户名称" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item v-if="form.userId == undefined" label="用户密码" prop="password" :rules="pwdValidator">
+            <el-form-item label="用户密码" prop="password" :rules="pwdValidator">
               <el-input v-model="form.password" placeholder="请输入用户密码" type="password" maxlength="20" show-password />
             </el-form-item>
           </el-col>
@@ -188,6 +263,8 @@
 import TreePanel from "@/components/TreePanel"
 import ExcelImportDialog from "@/components/ExcelImportDialog"
 import UserViewDrawer from "./view"
+import UserDetail from "./components/UserDetail"
+import UserSalary from "./components/UserSalary"
 import { usePasswordRule } from "@/utils/passwordRule"
 import { changeUserStatus, listUser, resetUserPwd, delUser, getUser, updateUser, addUser, deptTreeSelect } from "@/api/system/user"
 
@@ -211,11 +288,12 @@ const enabledDeptOptions = ref(undefined)
 const initPassword = ref(undefined)
 const postOptions = ref([])
 const roleOptions = ref([])
+const activeTab = ref("basic")
 // 列显隐信息
 const columns = ref({
   userId: { label: '用户编号', visible: true },
   userName: { label: '用户名称', visible: true },
-  nickName: { label: '用户昵称', visible: true },
+  realName: { label: '用户姓名', visible: true },
   deptName: { label: '部门', visible: true },
   phonenumber: { label: '手机号码', visible: true },
   status: { label: '状态', visible: true },
@@ -234,7 +312,7 @@ const data = reactive({
   },
   rules: {
     userName: [{ required: true, message: "用户名称不能为空", trigger: "blur" }, { min: 2, max: 20, message: "用户名称长度必须介于 2 和 20 之间", trigger: "blur" }],
-    nickName: [{ required: true, message: "用户昵称不能为空", trigger: "blur" }],
+    realName: [{ required: true, message: "用户姓名不能为空", trigger: "blur" }],
     email: [{ type: "email", message: "请输入正确的邮箱地址", trigger: ["blur", "change"] }],
     phonenumber: [{ pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/, message: "请输入正确的手机号码", trigger: "blur" }]
   }
@@ -381,7 +459,7 @@ function reset() {
     userId: undefined,
     deptId: undefined,
     userName: undefined,
-    nickName: undefined,
+    realName: undefined,
     password: undefined,
     phonenumber: undefined,
     email: undefined,
@@ -415,6 +493,7 @@ function handleAdd() {
 /** 修改按钮操作 */
 function handleUpdate(row) {
   reset()
+  activeTab.value = "basic"
   const userId = row.userId || ids.value
   getUser(userId).then(response => {
     form.value = response.data
@@ -432,14 +511,21 @@ function handleUpdate(row) {
 function submitForm() {
   proxy.$refs["userRef"].validate(valid => {
     if (valid) {
-      if (form.value.userId != undefined) {
-        updateUser(form.value).then(() => {
+      const submitData = { ...form.value }
+      delete submitData.dept
+      delete submitData.roles
+      delete submitData.posts
+      if (submitData.userId != undefined) {
+        updateUser(submitData).then(() => {
+          if (proxy.$refs["userDetailRef"]) {
+            proxy.$refs["userDetailRef"].submit()
+          }
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        addUser(form.value).then(() => {
+        addUser(submitData).then(() => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()

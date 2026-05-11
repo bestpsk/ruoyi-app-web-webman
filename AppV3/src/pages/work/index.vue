@@ -8,49 +8,109 @@
       </swiper>
     </view>
 
-    <view class="section-title">
-      <text>系统管理</text>
-    </view>
-
-    <view class="grid-body">
-      <view class="grid-row">
-        <view v-for="(item, index) in gridList" :key="index" class="grid-item" @click="handleGridClick(item)">
-          <view class="icon-wrapper">
-            <u-icon :name="item.icon" size="22" color="#fff" />
-          </view>
-          <text class="grid-text">{{ item.title }}</text>
+    <view class="search-card">
+      <view class="search-box">
+        <u-icon name="search" size="16" color="#86909C" />
+        <input
+          class="search-input"
+          type="text"
+          placeholder="搜索功能"
+          placeholder-class="search-placeholder"
+          v-model="searchKeyword"
+          confirm-type="search"
+        />
+        <view v-if="searchKeyword" class="search-clear" @click="searchKeyword = ''">
+          <u-icon name="close-circle-fill" size="14" color="#C9CDD4" />
         </view>
       </view>
     </view>
 
-    <view class="section-title">
-      <text>常用功能</text>
+    <view class="quick-card">
+      <view class="card-header">
+        <text class="card-title">常用功能</text>
+      </view>
+      <view class="quick-grid">
+        <view class="quick-item" @click="goToPage('/pages/mine/info/index')">
+          <view class="quick-icon"><u-icon name="account-fill" size="18" color="#3D6DF7" /></view>
+          <text class="quick-text">个人信息</text>
+        </view>
+        <view class="quick-item" @click="goToPage('/pages/mine/pwd/index')">
+          <view class="quick-icon"><u-icon name="lock-fill" size="18" color="#3D6DF7" /></view>
+          <text class="quick-text">修改密码</text>
+        </view>
+        <view class="quick-item" @click="goToPage('/pages/mine/setting/index')">
+          <view class="quick-icon"><u-icon name="setting" size="18" color="#3D6DF7" /></view>
+          <text class="quick-text">应用设置</text>
+        </view>
+        <view class="quick-item" @click="handleGridClick({ title: '日志查询', path: '' })">
+          <view class="quick-icon"><u-icon name="file-text" size="18" color="#3D6DF7" /></view>
+          <text class="quick-text">日志查询</text>
+        </view>
+      </view>
     </view>
 
-    <view class="quick-actions">
-      <view class="action-card" @click="goToPage('/pages/mine/info/index')">
-        <view class="quick-icon"><u-icon name="account-fill" size="20" color="#3c96f3" /></view>
-        <text class="action-label">个人信息</text>
+    <view class="grid-card">
+      <view class="card-header">
+        <text class="card-title">业务管理</text>
       </view>
-      <view class="action-card" @click="goToPage('/pages/mine/pwd/index')">
-        <view class="quick-icon"><u-icon name="lock-fill" size="20" color="#3c96f3" /></view>
-        <text class="action-label">修改密码</text>
+      <view class="divider"></view>
+      <view v-if="filteredBusinessList.length > 0" class="grid-body">
+        <view class="grid-row">
+          <view v-for="(item, index) in filteredBusinessList" :key="'biz-' + index" class="grid-item" @click="handleGridClick(item)">
+            <view class="icon-wrapper biz-icon">
+              <u-icon :name="item.icon" size="22" color="#fff" />
+            </view>
+            <text class="grid-text">{{ item.title }}</text>
+          </view>
+        </view>
       </view>
-      <view class="action-card" @click="goToPage('/pages/mine/setting/index')">
-        <view class="quick-icon"><u-icon name="setting" size="20" color="#3c96f3" /></view>
-        <text class="action-label">应用设置</text>
+      <view v-else class="empty-state">
+        <u-icon name="search" size="40" color="#C9CDD4" />
+        <text class="empty-text">未找到相关功能</text>
+      </view>
+    </view>
+
+    <view class="grid-card">
+      <view class="card-header">
+        <text class="card-title">系统管理</text>
+      </view>
+      <view class="divider"></view>
+      <view v-if="filteredGridList.length > 0" class="grid-body">
+        <view class="grid-row">
+          <view v-for="(item, index) in filteredGridList" :key="index" class="grid-item" @click="handleGridClick(item)">
+            <view class="icon-wrapper">
+              <u-icon :name="item.icon" size="22" color="#fff" />
+            </view>
+            <text class="grid-text">{{ item.title }}</text>
+          </view>
+        </view>
+      </view>
+      <view v-else class="empty-state">
+        <u-icon name="search" size="40" color="#C9CDD4" />
+        <text class="empty-text">未找到相关功能</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+
+const searchKeyword = ref('')
 
 const bannerList = ref([
   { image: '/static/images/banner/banner01.jpg' },
   { image: '/static/images/banner/banner02.jpg' },
   { image: '/static/images/banner/banner03.jpg' }
+])
+
+const businessList = ref([
+  { icon: 'home-fill', title: '企业管理', path: '/pages/business/enterprise/index' },
+  { icon: 'shop', title: '门店管理', path: '/pages/business/store/index' },
+  { icon: 'calendar', title: '行程安排', path: '/pages/business/schedule/index' },
+  { icon: 'edit-pen', title: '销售开单', path: '/pages/business/sales/index' },
+  { icon: 'grid', title: '项目操作', path: '/pages/business/operation/index' },
+  { icon: 'list', title: '订单管理', path: '/pages/business/order/index' }
 ])
 
 const gridList = ref([
@@ -63,6 +123,18 @@ const gridList = ref([
   { icon: 'setting', title: '参数设置', path: '' },
   { icon: 'chat', title: '通知公告', path: '' }
 ])
+
+const filteredBusinessList = computed(() => {
+  if (!searchKeyword.value.trim()) return businessList.value
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  return businessList.value.filter(item => item.title.toLowerCase().includes(keyword))
+})
+
+const filteredGridList = computed(() => {
+  if (!searchKeyword.value.trim()) return gridList.value
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  return gridList.value.filter(item => item.title.toLowerCase().includes(keyword))
+})
 
 function clickBannerItem(item) {
   console.info('Banner clicked:', item)
@@ -83,7 +155,7 @@ function goToPage(url) {
 
 <style lang="scss" scoped>
 page {
-  background-color: #f5f7fa;
+  background-color: #F5F7FA;
 }
 
 .work-container {
@@ -104,22 +176,115 @@ page {
   height: 100%;
 }
 
-.section-title {
-  padding: 24rpx 30rpx 16rpx;
+.search-card {
+  margin: 0 24rpx 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
+}
 
-  text {
-    font-size: 28rpx;
-    font-weight: 600;
-    color: #333;
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #F5F7FA;
+  border-radius: 36rpx;
+  padding: 0 24rpx;
+  height: 72rpx;
+  gap: 16rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1D2129;
+  height: 72rpx;
+}
+
+.search-placeholder {
+  color: #86909C;
+  font-size: 26rpx;
+}
+
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx;
+}
+
+.quick-card {
+  margin: 0 24rpx 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.quick-grid {
+  display: flex;
+  justify-content: space-between;
+}
+
+.quick-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  .quick-icon {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: 50%;
+    background: #E8F0FE;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .quick-text {
+    font-size: 22rpx;
+    color: #1D2129;
+    font-weight: 500;
   }
 }
 
+.grid-card {
+  margin: 0 24rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
+}
+
+.divider {
+  height: 1rpx;
+  background: #E5E6EB;
+  margin-bottom: 20rpx;
+}
+
 .grid-body {
-  margin: 0 20rpx;
-  background-color: #fff;
-  border-radius: 12rpx;
-  padding: 30rpx 10rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  padding: 10rpx 0;
 }
 
 .grid-row {
@@ -134,17 +299,29 @@ page {
   align-items: center;
   justify-content: center;
   padding: 20rpx 0;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+
+  transition: all 0.2s ease;
 }
 
 .icon-wrapper {
   width: 90rpx;
   height: 90rpx;
   border-radius: 50%;
-  background-color: #3c96f3;
+  background-color: #3D6DF7;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 14rpx;
+  transition: all 0.2s ease;
+
+  &.biz-icon {
+    background-color: #FF6B35;
+  }
 
   &:active {
     opacity: 0.8;
@@ -154,44 +331,22 @@ page {
 
 .grid-text {
   font-size: 24rpx;
-  color: #333;
+  color: #1D2129;
   text-align: center;
+  font-weight: 500;
 }
 
-.quick-actions {
-  margin: 20rpx;
-  display: flex;
-  gap: 20rpx;
-}
-
-.action-card {
-  flex: 1;
-  background-color: #fff;
-  border-radius: 12rpx;
-  padding: 32rpx 20rpx;
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-
-  &:active {
-    opacity: 0.7;
-  }
-}
-
-.quick-icon {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background-color: #e8f2ff;
-  display: flex;
-  align-items: center;
   justify-content: center;
+  padding: 60rpx 0;
+  gap: 20rpx;
 }
 
-.action-label {
-  font-size: 24rpx;
-  color: #333;
+.empty-text {
+  font-size: 26rpx;
+  color: #86909C;
 }
 </style>

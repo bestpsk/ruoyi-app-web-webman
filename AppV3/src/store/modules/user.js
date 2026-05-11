@@ -14,6 +14,7 @@ export const useUserStore = defineStore('user', {
     token: getToken(),
     id: storage.get(constant.id),
     name: storage.get(constant.name),
+    nickName: storage.get(constant.nickName) || '',
     avatar: storage.get(constant.avatar),
     roles: storage.get(constant.roles),
     permissions: storage.get(constant.permissions)
@@ -23,6 +24,7 @@ export const useUserStore = defineStore('user', {
     getAvatar: (state) => state.avatar,
     getId: (state) => state.id,
     getName: (state) => state.name,
+    getNickName: (state) => state.nickName,
     getRoles: (state) => state.roles,
     getPermissions: (state) => state.permissions
   },
@@ -45,6 +47,7 @@ export const useUserStore = defineStore('user', {
       }
       const userid = isEmpty(user) || isEmpty(user.userId) ? '' : user.userId
       const username = isEmpty(user) || isEmpty(user.userName) ? '' : user.userName
+      const nickname = isEmpty(user) || isEmpty(user.nickName) ? '' : user.nickName
       if (res.roles && res.roles.length > 0) {
         this.roles = res.roles
         this.permissions = res.permissions
@@ -56,9 +59,11 @@ export const useUserStore = defineStore('user', {
       }
       this.id = userid
       this.name = username
+      this.nickName = nickname
       this.avatar = avatar
       storage.set(constant.id, userid)
       storage.set(constant.name, username)
+      storage.set(constant.nickName, nickname)
       storage.set(constant.avatar, avatar)
     },
     async logOut() {
