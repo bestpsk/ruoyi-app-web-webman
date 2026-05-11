@@ -62,7 +62,7 @@
               </view>
               <view class="form-row readonly">
                 <text class="form-label">单次价</text>
-                <text class="form-value auto-hint"><u-icon name="info-circle" size="12" color="#C9CDD4"></u-icon> ¥{{ calcUnitPrice(item) }} <text class="auto-tag">自动</text></text>
+                <text class="form-value auto-hint">¥{{ calcUnitPrice(item) }}</text>
               </view>
               <view class="form-row">
                 <text class="form-label">实付金额</text>
@@ -101,7 +101,7 @@
 
         <view class="remark-section">
           <view class="section-title-row">
-            <u-icon name="chat-dot" size="16" color="#86909C"></u-icon>
+            <u-icon name="chat" size="16" color="#86909C"></u-icon>
             <text class="section-label">备注</text>
           </view>
           <u-textarea v-model="orderRemark" placeholder="请输入备注（选填）" count :maxlength="500" height="80" :customStyle="{ background: '#F7F8FA', borderRadius: '8rpx', fontSize: '26rpx' }"></u-textarea>
@@ -135,21 +135,6 @@
       </view>
 
       <view v-if="currentTab === 2" class="tab-panel">
-        <view v-if="operationList.length > 0" class="record-list">
-          <view v-for="item in operationList" :key="item.recordId" class="record-card">
-            <view class="record-header">
-              <text class="record-type">{{ item.operationType === '1' ? '体验' : '持卡' }}</text>
-              <text class="record-time">{{ formatTime(item.createTime) }}</text>
-            </view>
-            <view class="record-body">
-              <text class="record-content">{{ item.productName || item.content || item.remark || '-' }}</text>
-            </view>
-          </view>
-        </view>
-        <u-empty v-else mode="data" text="暂无操作记录" :marginTop="40"></u-empty>
-      </view>
-
-      <view v-if="currentTab === 3" class="tab-panel">
         <view v-if="owedPackageList.length > 0" class="record-list">
           <view v-for="pkg in owedPackageList" :key="pkg.packageId" class="record-card owed-card">
             <view class="record-header">
@@ -223,14 +208,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { getCustomer } from '@/api/business/customer'
 import { addSalesOrder, listSalesOrder } from '@/api/business/salesOrder'
-import { listOperation } from '@/api/business/operationRecord'
+// import { listOperation } from '@/api/business/operationRecord'
 import { getOwedPackages, addRepayment } from '@/api/business/repayment'
 
 const currentTab = ref(0)
-const tabList = ref([{ name: '开单' }, { name: '开单记录' }, { name: '操作记录' }, { name: '还欠款' }])
+const tabList = ref([{ name: '开单' }, { name: '开单记录' }, { name: '还欠款' }])
 const customerInfo = ref(null)
 const orderList = ref([])
-const operationList = ref([])
+// const operationList = ref([])
 const owedPackageList = ref([])
 const submitting = ref(false)
 const scrollHeight = ref(500)
@@ -291,8 +276,7 @@ const repaySubmitting = ref(false)
 function onTabChange(e) {
   currentTab.value = e.index
   if (e.index === 1) loadOrders()
-  if (e.index === 2) loadOperations()
-  if (e.index === 3) loadOwedPackages()
+  if (e.index === 2) loadOwedPackages()
 }
 
 async function loadCustomer() {
@@ -312,14 +296,14 @@ async function loadOrders() {
   } catch (e) { console.error('加载订单失败:', e) }
 }
 
-async function loadOperations() {
-  if (!customerId.value) return
-  try {
-    const response = await listOperation({ customerId: customerId.value, pageNum: 1, pageSize: 50 })
-    const data = response.data || response
-    operationList.value = data.rows || []
-  } catch (e) { console.error('加载操作记录失败:', e) }
-}
+// async function loadOperations() {
+//   if (!customerId.value) return
+//   try {
+//     const response = await listOperation({ customerId: customerId.value, pageNum: 1, pageSize: 50 })
+//     const data = response.data || response
+//     operationList.value = data.rows || []
+//   } catch (e) { console.error('加载操作记录失败:', e) }
+// }
 
 async function loadOwedPackages() {
   if (!customerId.value) return
@@ -480,8 +464,8 @@ page { background-color: #F5F6F8; }
 .customer-phone { font-size: 26rpx; color: #3D6DF7; margin-left: auto; }
 .store-name { font-size: 24rpx; color: #86909C; }
 
-.tab-content { flex: 1; padding: 0 14rpx; }
-.tab-panel { padding: 12rpx 0 40rpx; }
+.tab-content { flex: 1; }
+.tab-panel { padding: 12rpx 32rpx 40rpx; }
 
 .package-name-section { background: #fff; border-radius: 10rpx; padding: 18rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
 .section-title-row { display: flex; align-items: center; gap: 8rpx; margin-bottom: 10rpx; }
@@ -501,9 +485,9 @@ page { background-color: #F5F6F8; }
 .delete-text { font-size: 22rpx; color: #F56C6C; }
 
 .item-form { display: flex; flex-direction: column; gap: 8rpx; }
-.form-row { display: flex; align-items: center; gap: 12rpx; min-height: 56rpx; }
-.form-row.readonly { background: #F7F8FA; border-radius: 6rpx; padding: 0 14rpx; }
-.form-label { font-size: 24rpx; color: #86909C; min-width: 90rpx; white-space: nowrap; }
+.form-row { display: flex; align-items: center; gap: 12rpx; min-height: 56rpx; background: #FAFBFC; border-radius: 6rpx; padding: 0 12rpx; }
+.form-row.readonly { }
+.form-label { font-size: 24rpx; color: #86909C; width: 120rpx; min-width: 120rpx; white-space: nowrap; }
 .form-input { flex: 1; height: 56rpx; background: #F7F8FA; border-radius: 6rpx; padding: 0 16rpx; font-size: 26rpx; color: #1D2129; text-align: right; box-sizing: border-box; }
 .form-value { flex: 1; font-size: 26rpx; color: #1D2129; font-weight: 500; text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 4rpx; }
 .auto-hint { color: #4E5969 !important; font-weight: 400; }
