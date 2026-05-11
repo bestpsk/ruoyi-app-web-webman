@@ -12,7 +12,8 @@ class SysNoticeController
     public function list(Request $request)
     {
         $service = new SysNoticeService();
-        $result = $service->selectNoticeList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectNoticeList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

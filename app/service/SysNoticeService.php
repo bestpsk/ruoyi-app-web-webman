@@ -21,8 +21,8 @@ class SysNoticeService
             $query->where('create_by', 'like', '%' . $params['create_by'] . '%');
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('notice_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
@@ -103,10 +103,10 @@ class SysNoticeService
         $query = SysNoticeRead::join('sys_user', 'sys_notice_read.user_id', '=', 'sys_user.user_id')
             ->where('sys_notice_read.notice_id', $noticeId)
             ->where('sys_user.del_flag', '0')
-            ->select('sys_user.user_id', 'sys_user.user_name', 'sys_user.nick_name', 'sys_notice_read.read_time');
+            ->select('sys_user.user_id', 'sys_user.user_name', 'sys_user.real_name', 'sys_notice_read.read_time');
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         return $query->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 }

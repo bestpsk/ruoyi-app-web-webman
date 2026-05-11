@@ -11,7 +11,8 @@ class SysDeptController
     public function list(Request $request)
     {
         $service = new SysDeptService();
-        $depts = $service->selectDeptList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $depts = $service->selectDeptList($params);
         return AjaxResult::success($depts);
     }
 
@@ -77,5 +78,13 @@ class SysDeptController
             return AjaxResult::error('存在下级部门或关联用户，不允许删除');
         }
         return AjaxResult::success();
+    }
+
+    public function treeselect(Request $request)
+    {
+        $service = new SysDeptService();
+        $depts = $service->selectDeptList();
+        $tree = $service->buildDeptTreeSelect($depts, 0);
+        return AjaxResult::success($tree);
     }
 }

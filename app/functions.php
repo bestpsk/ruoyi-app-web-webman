@@ -6,8 +6,14 @@ if (!function_exists('convert_to_snake_case')) {
         $result = [];
         foreach ($data as $key => $value) {
             $newKey = is_string($key) ? to_snake_case($key) : $key;
-            if (is_array($value) && !empty($value) && is_associative_array($value)) {
-                $result[$newKey] = convert_to_snake_case($value);
+            if (is_array($value) && !empty($value)) {
+                if (is_associative_array($value)) {
+                    $result[$newKey] = convert_to_snake_case($value);
+                } else {
+                    $result[$newKey] = array_map(function ($item) {
+                        return is_array($item) ? convert_to_snake_case($item) : $item;
+                    }, $value);
+                }
             } else {
                 $result[$newKey] = $value;
             }

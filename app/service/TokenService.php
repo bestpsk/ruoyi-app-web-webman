@@ -74,7 +74,7 @@ class TokenService
     public function refreshToken(LoginUser $loginUser)
     {
         $loginUser->loginTime = intval(microtime(true) * 1000);
-        $loginUser->expireTime = $loginUser->loginTime + $this->expire * 60 * 1000;
+        $loginUser->expireTime = $loginUser->loginTime + $this->expire * 60 * 10000;
         $userKey = Constants::LOGIN_TOKEN_KEY . $loginUser->token;
         $redis = Redis::connection();
         $redis->setex($userKey, $this->expire * 60, json_encode($loginUser->toArray()));

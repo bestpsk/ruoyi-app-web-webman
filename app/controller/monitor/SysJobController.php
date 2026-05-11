@@ -12,7 +12,8 @@ class SysJobController
     public function list(Request $request)
     {
         $service = new SysJobService();
-        $result = $service->selectJobList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectJobList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

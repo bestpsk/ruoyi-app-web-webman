@@ -12,7 +12,8 @@ class SysRoleController
     public function list(Request $request)
     {
         $service = new SysRoleService();
-        $result = $service->selectRoleList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectRoleList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

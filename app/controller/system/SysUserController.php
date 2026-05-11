@@ -146,7 +146,8 @@ class SysUserController
 
     public function remove(Request $request)
     {
-        $userIds = explode(',', $request->input('userIds', ''));
+        $parts = explode('/', $request->path());
+        $userIds = explode(',', end($parts));
         $userIds = array_map('intval', array_filter($userIds));
         if (in_array(1, $userIds)) {
             return AjaxResult::error('不允许删除超级管理员');

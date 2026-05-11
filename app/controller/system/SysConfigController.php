@@ -12,7 +12,8 @@ class SysConfigController
     public function list(Request $request)
     {
         $service = new SysConfigService();
-        $result = $service->selectConfigList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectConfigList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

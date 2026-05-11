@@ -11,7 +11,7 @@ class Constants
 
     const JWT_SECRET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
     const JWT_ALGO = 'HS512';
-    const TOKEN_EXPIRE = 30;
+    const TOKEN_EXPIRE = 300;
     const TOKEN_PREFIX = 'Bearer ';
     const LOGIN_USER_KEY = 'login_user_key';
     const JWT_USERNAME = 'sub';

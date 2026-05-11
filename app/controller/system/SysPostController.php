@@ -12,7 +12,8 @@ class SysPostController
     public function list(Request $request)
     {
         $service = new SysPostService();
-        $result = $service->selectPostList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectPostList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

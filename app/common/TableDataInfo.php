@@ -22,21 +22,29 @@ class TableDataInfo
 
     private static function convertToCamelCase($data)
     {
-        if (!is_array($data) && !is_object($data)) {
-            return $data;
+        if ($data === null) {
+            return null;
+        }
+
+        if ($data instanceof \Illuminate\Support\Collection) {
+            return $data->map(function ($item) {
+                return self::convertToCamelCase($item);
+            })->toArray();
         }
 
         if (is_object($data)) {
-            $data = $data->toArray();
+            $data = method_exists($data, 'toArray') ? $data->toArray() : (array) $data;
+        }
+
+        if (!is_array($data)) {
+            return $data;
         }
 
         $result = [];
         foreach ($data as $key => $value) {
-            $newKey = self::toCamelCase($key);
-            if (is_array($value)) {
+            $newKey = is_string($key) ? self::toCamelCase($key) : $key;
+            if (is_array($value) || is_object($value)) {
                 $result[$newKey] = self::convertToCamelCase($value);
-            } elseif (is_object($value)) {
-                $result[$newKey] = self::convertToCamelCase($value->toArray());
             } else {
                 $result[$newKey] = $value;
             }

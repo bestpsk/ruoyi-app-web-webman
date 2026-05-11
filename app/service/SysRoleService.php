@@ -30,8 +30,8 @@ class SysRoleService
             $query->where('create_time', '<=', $params['end_time']);
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         $orderBy = $params['orderByColumn'] ?? 'role_sort';
         $isAsc = $params['isAsc'] ?? 'asc';
         $direction = strtolower($isAsc) === 'asc' ? 'asc' : 'desc';
@@ -168,8 +168,8 @@ class SysRoleService
             $query->where('sys_user.phonenumber', 'like', '%' . $params['phonenumber'] . '%');
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         return $query->select('sys_user.*')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
@@ -187,8 +187,8 @@ class SysRoleService
             $query->where('phonenumber', 'like', '%' . $params['phonenumber'] . '%');
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         return $query->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 

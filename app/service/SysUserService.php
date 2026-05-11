@@ -43,8 +43,8 @@ class SysUserService
             $query = DataScopeService::applyDataScope($query, $params['login_user'], 'sys_dept', 'sys_user');
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         $orderBy = $params['orderByColumn'] ?? '';
         $isAsc = $params['isAsc'] ?? 'asc';
 
@@ -227,7 +227,7 @@ class SysUserService
                     $initPwd = SysConfigService::selectConfigByKey('sys.user.initPassword');
                     $user['password'] = PasswordService::encrypt($initPwd ?: '123456');
                     $user['create_by'] = $operName;
-                    $user['nick_name'] = $user['nick_name'] ?? $userName;
+                    $user['real_name'] = $user['real_name'] ?? $userName;
                     $user['status'] = $user['status'] ?? '0';
                     $user['del_flag'] = '0';
                     $this->insertUser($user);

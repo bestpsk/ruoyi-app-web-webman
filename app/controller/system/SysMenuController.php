@@ -12,7 +12,8 @@ class SysMenuController
     {
         $service = new SysMenuService();
         $userId = $request->loginUser ? $request->loginUser->userId : null;
-        $menus = $service->selectMenuList($request->all(), $userId);
+        $params = convert_to_snake_case($request->all());
+        $menus = $service->selectMenuList($params, $userId);
         return AjaxResult::success($menus);
     }
 
@@ -69,6 +70,14 @@ class SysMenuController
                 $menu = convert_to_snake_case($menu);
                 if (isset($menu['menu_id']) && isset($menu['order_num'])) {
                     \app\model\SysMenu::where('menu_id', $menu['menu_id'])->update(['order_num' => $menu['order_num']]);
+                }
+            }
+        } elseif (!empty($data['menu_ids']) && !empty($data['order_nums'])) {
+            $menuIds = explode(',', $data['menu_ids']);
+            $orderNums = explode(',', $data['order_nums']);
+            foreach ($menuIds as $index => $menuId) {
+                if (isset($orderNums[$index])) {
+                    \app\model\SysMenu::where('menu_id', intval($menuId))->update(['order_num' => intval($orderNums[$index])]);
                 }
             }
         }

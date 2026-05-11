@@ -11,7 +11,7 @@ class SysUser extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'dept_id', 'user_name', 'nick_name', 'user_type', 'email', 'phonenumber',
+        'dept_id', 'user_name', 'real_name', 'user_type', 'email', 'phonenumber',
         'sex', 'avatar', 'password', 'status', 'del_flag', 'login_ip', 'login_date',
         'pwd_update_date', 'create_by', 'create_time', 'update_by', 'update_time', 'remark'
     ];
@@ -22,7 +22,7 @@ class SysUser extends Model
             'user_id' => ['name' => '用户序号', 'type' => 'export', 'cellType' => 'numeric', 'prompt' => '用户编号', 'sort' => 1],
             'dept_id' => ['name' => '部门编号', 'type' => 'import', 'sort' => 2],
             'user_name' => ['name' => '登录名称', 'sort' => 3],
-            'nick_name' => ['name' => '用户名称', 'sort' => 4],
+            'real_name' => ['name' => '用户姓名', 'sort' => 4],
             'email' => ['name' => '用户邮箱', 'sort' => 5],
             'phonenumber' => ['name' => '手机号码', 'cellType' => 'text', 'sort' => 6],
             'sex' => ['name' => '用户性别', 'readConverterExp' => '0=男,1=女,2=未知', 'sort' => 7],
@@ -50,5 +50,15 @@ class SysUser extends Model
     public function isAdmin()
     {
         return $this->user_id === 1;
+    }
+
+    public function detail()
+    {
+        return $this->hasOne(SysUserDetail::class, 'user_id', 'user_id');
+    }
+
+    public function salaries()
+    {
+        return $this->hasMany(HrUserSalary::class, 'user_id', 'user_id');
     }
 }

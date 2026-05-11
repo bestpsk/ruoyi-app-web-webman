@@ -13,7 +13,8 @@ class SysDictDataController
     public function list(Request $request)
     {
         $service = new SysDictDataService();
-        $result = $service->selectDictDataList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectDictDataList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 
@@ -59,8 +60,16 @@ class SysDictDataController
 
     public function remove(Request $request)
     {
-        $dictCodes = explode(',', $request->input('dictCodes', ''));
+        $dictCodes = $request->input('dictCodes');
+        if (empty($dictCodes)) {
+            $parts = explode('/', $request->path());
+            $dictCodes = end($parts);
+        }
+        $dictCodes = explode(',', $dictCodes);
         $dictCodes = array_map('intval', array_filter($dictCodes));
+        if (empty($dictCodes)) {
+            return AjaxResult::error('字典编码不能为空');
+        }
         $service = new SysDictDataService();
         $result = $service->deleteDictDataByIds($dictCodes);
         return AjaxResult::toAjax($result ? 1 : 0);

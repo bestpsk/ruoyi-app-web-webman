@@ -12,7 +12,8 @@ class SysDictTypeController
     public function list(Request $request)
     {
         $service = new SysDictTypeService();
-        $result = $service->selectDictTypeList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectDictTypeList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

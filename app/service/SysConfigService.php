@@ -22,8 +22,8 @@ class SysConfigService
             $query->where('config_type', $params['config_type']);
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('config_id', 'asc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
