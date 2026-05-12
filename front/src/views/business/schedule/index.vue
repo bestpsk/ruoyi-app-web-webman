@@ -64,7 +64,9 @@
                 :data-day="day"
                 @mouseenter="handleCellEnter(rowIndex, day)"
                 @click.stop="handleCellClick(row, day)"
-              />
+              >
+                <span v-if="isRestDayForUser(row.userId, day)" class="rest-label">休息</span>
+              </div>
               <template v-for="(merged, mIdx) in getMergedSchedules(row)" :key="'m-' + rowIndex + '-' + merged.startDay">
                 <div
                   class="schedule-block"
@@ -449,6 +451,7 @@ function getList() {
       scheduleData.value = response.data || []
       getScheduleList(params)
     })
+    loadRestDateMap()
   } else if (activeTab.value === 'enterprise') {
     getEnterpriseSchedule(params).then(response => {
       scheduleData.value = response.data || []
@@ -800,6 +803,22 @@ async function saveRestDatesAction() {
   } catch (error) { proxy.$modal.msgError("保存失败") }
 }
 
+async function loadRestDateMap() {
+  try {
+    const res = await listEmployeeConfig({ pageNum: 1, pageSize: 1000 })
+    const rows = res.rows || []
+    const map = {}
+    rows.forEach(row => {
+      if (row.restDates?.length && row.userId) {
+        map[row.userId] = row.restDates
+      }
+    })
+    restDateMap.value = map
+  } catch (e) {
+    console.error('加载休息日数据失败:', e)
+  }
+}
+
 function isRestDayForUser(userId, day) {
   const dates = restDateMap.value[userId]
   if (!dates) return false
@@ -950,15 +969,23 @@ onMounted(() => {
 }
 
 .day-cell.rest-day {
-  background: repeating-linear-gradient(
-    45deg,
-    #f5f5f5,
-    #f5f5f5 4px,
-    #fafafa 4px,
-    #fafafa 8px
-  );
+  background: linear-gradient(135deg, #fff0f0 0%, #ffe8e8 100%);
+  border-color: #fbc4c4;
   cursor: not-allowed;
-  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rest-label {
+  font-size: 11px;
+  color: #F56C6C;
+  font-weight: 600;
+  background: rgba(245, 108, 108, 0.08);
+  border: 1px solid rgba(245, 108, 108, 0.25);
+  border-radius: 3px;
+  padding: 1px 5px;
+  line-height: 16px;
 }
 
 .schedule-block {
