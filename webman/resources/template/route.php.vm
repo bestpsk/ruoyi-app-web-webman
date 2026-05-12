@@ -1,0 +1,11 @@
+<?php
+
+use app\controller\${moduleName}\${className}Controller;
+
+return [
+    ['GET', '/${moduleName}/${businessName}/list', [${className}Controller::class, 'list']],
+    ['GET', '/${moduleName}/${businessName}/{id}', [${className}Controller::class, 'getInfo']],
+    ['POST', '/${moduleName}/${businessName}', [${className}Controller::class, 'add']],
+    ['PUT', '/${moduleName}/${businessName}', [${className}Controller::class, 'edit']],
+    ['DELETE', '/${moduleName}/${businessName}/{ids}', [${className}Controller::class, 'remove']],
+];

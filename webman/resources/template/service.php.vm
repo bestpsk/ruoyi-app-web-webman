@@ -1,0 +1,85 @@
+<?php
+
+namespace app\service;
+
+use app\model\${className};
+use support\Db;
+
+class ${className}Service
+{
+    public function select${className}List($params = [])
+    {
+        $query = ${className}::query();
+#foreach ($columns as $column)
+#if ($column.is_query == '1')
+        if (!empty($params['${column.java_field}'])) {
+#if ($column.query_type == 'LIKE')
+            $query->where('${column.column_name}', 'like', '%' . $params['${column.java_field}'] . '%');
+#elseif ($column.query_type == 'BETWEEN')
+            if (!empty($params['${column.java_field}_begin'])) {
+                $query->where('${column.column_name}', '>=', $params['${column.java_field}_begin']);
+            }
+            if (!empty($params['${column.java_field}_end'])) {
+                $query->where('${column.column_name}', '<=', $params['${column.java_field}_end']);
+            }
+#else
+            $query->where('${column.column_name}', $params['${column.java_field}']);
+#end
+        }
+#end
+#end
+
+        $pageNum = intval($params['page_num'] ?? $params['pageNum'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? $params['pageSize'] ?? 10);
+#if ($pkColumn)
+        return $query->orderBy('${pkColumn.column_name}', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+#else
+        return $query->orderBy('id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+#end
+    }
+
+    public function select${className}ById($id)
+    {
+        return ${className}::find($id);
+    }
+
+    public function insert${className}($data)
+    {
+        $model = new ${className}();
+#foreach ($columns as $column)
+#if ($column.is_insert == '1' && $column.is_pk != '1')
+        if (isset($data['${column.java_field}'])) {
+            $model->${column.java_field} = $data['${column.java_field}'];
+        }
+#end
+#end
+        $model->create_time = date('Y-m-d H:i:s');
+        return $model->save();
+    }
+
+    public function update${className}($data)
+    {
+#if ($pkColumn)
+        $id = $data['${pkColumn.java_field}'] ?? null;
+        if (!$id) return false;
+        $model = ${className}::find($id);
+#else
+        return false;
+#end
+        if (!$model) return false;
+#foreach ($columns as $column)
+#if ($column.is_edit == '1' && $column.is_pk != '1')
+        if (isset($data['${column.java_field}'])) {
+            $model->${column.java_field} = $data['${column.java_field}'];
+        }
+#end
+#end
+        $model->update_time = date('Y-m-d H:i:s');
+        return $model->save();
+    }
+
+    public function delete${className}ByIds($ids)
+    {
+        return ${className}::whereIn('id', $ids)->delete();
+    }
+}

@@ -1,0 +1,50 @@
+<?php
+
+namespace app\controller\${moduleName};
+
+use app\common\AjaxResult;
+use app\model\${className};
+use app\service\${className}Service;
+use support\Request;
+
+class ${className}Controller
+{
+    public function list(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $service = new ${className}Service();
+        $result = $service->select${className}List($params);
+        return \app\common\TableDataInfo::result($result->items(), $result->total());
+    }
+
+    public function getInfo(Request $request, $id)
+    {
+        $service = new ${className}Service();
+        $data = $service->select${className}ById($id);
+        return AjaxResult::success($data);
+    }
+
+    public function add(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $service = new ${className}Service();
+        $result = $service->insert${className}($params);
+        return $result ? AjaxResult::success() : AjaxResult::error();
+    }
+
+    public function edit(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $service = new ${className}Service();
+        $result = $service->update${className}($params);
+        return $result ? AjaxResult::success() : AjaxResult::error();
+    }
+
+    public function remove(Request $request, $ids)
+    {
+        $service = new ${className}Service();
+        $idsArray = explode(',', $ids);
+        $result = $service->delete${className}ByIds($idsArray);
+        return $result ? AjaxResult::success() : AjaxResult::error();
+    }
+}
