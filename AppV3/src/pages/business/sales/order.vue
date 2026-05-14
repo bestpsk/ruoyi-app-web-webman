@@ -14,7 +14,7 @@
 
     <u-tabs :list="tabList" :current="currentTab" @click="onTabChange" :activeStyle="{ color: '#3D6DF7', fontWeight: 'bold' }" :lineColor="'#3D6DF7'" :scrollable="false"></u-tabs>
 
-    <scroll-view scroll-y class="tab-content" :style="{ height: scrollHeight + 'px' }">
+    <view class="tab-content">
       <view v-if="currentTab === 0" class="tab-panel">
         <view class="package-name-section">
           <view class="section-title-row">
@@ -99,6 +99,14 @@
           </view>
         </view>
 
+        <view class="dealer-section">
+          <view class="section-title-row">
+            <u-icon name="account" size="16" color="#3D6DF7"></u-icon>
+            <text class="section-label">门店成交人</text>
+          </view>
+          <input class="dealer-input" type="text" v-model="orderStoreDealer" placeholder="请输入门店成交人（选填）" />
+        </view>
+
         <view class="remark-section">
           <view class="section-title-row">
             <u-icon name="chat" size="16" color="#86909C"></u-icon>
@@ -115,19 +123,58 @@
       <view v-if="currentTab === 1" class="tab-panel">
         <view v-if="orderList.length > 0" class="record-list">
           <view v-for="item in orderList" :key="item.orderId" class="record-card">
-            <view class="record-header">
-              <text class="record-no">{{ item.orderNo || ('ORD' + item.orderId) }}</text>
-              <text class="record-status" :class="'status-' + item.orderStatus">{{ getOrderStatusName(item.orderStatus) }}</text>
-            </view>
-            <view class="record-body">
-              <view class="record-amounts">
-                <text class="record-amount">¥{{ Number(item.dealAmount || 0).toFixed(2) }}</text>
-                <text class="record-paid" v-if="Number(item.paidAmount || 0) > 0">实付¥{{ Number(item.paidAmount || 0).toFixed(2) }}</text>
+            <view class="rc-header">
+              <view class="rc-header-left">
+                <u-icon name="file-text" size="28" color="#3D6DF7"></u-icon>
+                <text class="rc-no">{{ item.orderNo || ('ORD' + item.orderId) }}</text>
               </view>
-              <text class="record-time">{{ formatTime(item.createTime) }}</text>
+              <text class="rc-status" :class="'st-' + item.orderStatus">{{ getOrderStatusName(item.orderStatus) }}</text>
             </view>
-            <view class="record-remark" v-if="item.remark">
-              <text class="remark-text">{{ item.remark }}</text>
+
+            <view class="rc-items" v-if="item.items && item.items.length">
+              <view v-for="(it, idx) in item.items" :key="idx" class="rc-item-row">
+                <u-icon name="checkbox-mark" size="24" color="#3D6DF7"></u-icon>
+                <text class="rc-item-name">{{ it.productName || '未命名品项' }}</text>
+                <text class="rc-item-qty">×{{ it.quantity || 1 }}</text>
+                <text class="rc-item-price">¥{{ Number(it.dealAmount || 0).toFixed(2) }}</text>
+              </view>
+            </view>
+
+            <view class="rc-divider" v-if="item.items && item.items.length"></view>
+
+            <view class="rc-amounts">
+              <view class="rc-amount-group">
+                <text class="rc-amt-label">成交</text>
+                <text class="rc-amt-deal">¥{{ Number(item.dealAmount || 0).toFixed(2) }}</text>
+              </view>
+              <view class="rc-amount-group">
+                <text class="rc-amt-label">实付</text>
+                <text class="rc-amt-paid">¥{{ Number(item.paidAmount || 0).toFixed(2) }}</text>
+              </view>
+              <view class="rc-amount-group" v-if="Number(item.owedAmount || 0) > 0">
+                <text class="rc-amt-label">欠款</text>
+                <text class="rc-amt-owed">¥{{ Number(item.owedAmount || 0).toFixed(2) }}</text>
+              </view>
+            </view>
+
+            <view class="rc-footer">
+              <view class="rc-meta-row" v-if="item.storeDealer || item.creatorUserName">
+                <view class="rc-meta-item">
+                  <u-icon name="account" size="18" color="#86909C"></u-icon>
+                  <text class="rc-meta-val">{{ item.storeDealer || '-' }}</text>
+                </view>
+                <text class="rc-meta-sep">|</text>
+                <view class="rc-meta-item">
+                  <u-icon name="man-add" size="18" color="#86909C"></u-icon>
+                  <text class="rc-meta-val">{{ item.creatorUserName || '-' }}</text>
+                </view>
+              </view>
+              <text class="rc-time">{{ formatTimeShort(item.createTime) }}</text>
+            </view>
+
+            <view class="rc-remark" v-if="item.remark">
+              <u-icon name="edit-pen" size="18" color="#C9CDD4"></u-icon>
+              <text class="rc-remark-text">{{ item.remark }}</text>
             </view>
           </view>
         </view>
@@ -136,28 +183,44 @@
 
       <view v-if="currentTab === 2" class="tab-panel">
         <view v-if="owedPackageList.length > 0" class="record-list">
-          <view v-for="pkg in owedPackageList" :key="pkg.packageId" class="record-card owed-card">
-            <view class="record-header">
-              <text class="record-no">{{ pkg.packageName || pkg.packageNo }}</text>
-              <text class="owed-amount">欠款: ¥{{ Number(pkg.owedAmount || 0).toFixed(2) }}</text>
-            </view>
-            <view class="record-body">
-              <view class="owed-info">
-                <text class="owed-label">成交金额: ¥{{ Number(pkg.totalAmount || 0).toFixed(2) }}</text>
-                <text class="owed-label">已付金额: ¥{{ Number(pkg.paidAmount || 0).toFixed(2) }}</text>
+          <view v-for="pkg in owedPackageList" :key="pkg.packageId" class="record-card rc-owed-card">
+            <view class="rc-header">
+              <view class="rc-header-left">
+                <u-icon name="file-text" size="28" color="#F53F3F"></u-icon>
+                <text class="rc-no">{{ pkg.packageName || pkg.packageNo }}</text>
               </view>
-              <view class="repay-btn" @click="openRepayPopup(pkg)">
-                <text>还款</text>
+              <view class="rc-owed-badge">欠¥{{ Number(pkg.owedAmount || 0).toFixed(2) }}</view>
+            </view>
+
+            <view class="rc-items rc-owed-info">
+              <view class="rc-item-row" style="padding: 8rpx 16rpx;">
+                <u-icon name="rmb-circle" size="22" color="#86909C"></u-icon>
+                <text class="rc-item-name">成交 ¥{{ Number(pkg.totalAmount || 0).toFixed(2) }}</text>
+              </view>
+              <view class="rc-item-row" style="padding: 8rpx 16rpx;">
+                <u-icon name="checkmark-circle" size="22" color="#00B42A"></u-icon>
+                <text class="rc-item-name">已付 ¥{{ Number(pkg.paidAmount || 0).toFixed(2) }}</text>
               </view>
             </view>
-            <view class="record-time-row">
-              <text class="record-time">{{ formatTime(pkg.createTime) }}</text>
+
+            <view class="rc-divider"></view>
+
+            <view class="rc-action-row">
+              <view class="rc-repay-btn" @click="openRepayPopup(pkg)">
+                <u-icon name="red-packet" size="24" color="#fff"></u-icon>
+                <text class="rc-repay-text">还款</text>
+              </view>
+            </view>
+
+            <view class="rc-footer">
+              <u-icon name="clock" size="18" color="#C9CDD4"></u-icon>
+              <text class="rc-time">{{ formatTimeShort(pkg.createTime) }}</text>
             </view>
           </view>
         </view>
         <u-empty v-else mode="data" text="暂无欠款记录" :marginTop="40"></u-empty>
       </view>
-    </scroll-view>
+    </view>
 
     <u-popup :show="showRepayPopup" mode="bottom" round="16" @close="closeRepayPopup">
       <view class="repay-popup">
@@ -212,13 +275,16 @@ import { addSalesOrder, listSalesOrder } from '@/api/business/salesOrder'
 import { getOwedPackages, addRepayment } from '@/api/business/repayment'
 
 const currentTab = ref(0)
-const tabList = ref([{ name: '开单' }, { name: '开单记录' }, { name: '还欠款' }])
+const tabList = computed(() => {
+  const tabs = [{ name: '开单' }, { name: '开单记录' }]
+  if (owedPackageList.value.length > 0) tabs.push({ name: '还欠款' })
+  return tabs
+})
 const customerInfo = ref(null)
 const orderList = ref([])
 // const operationList = ref([])
 const owedPackageList = ref([])
 const submitting = ref(false)
-const scrollHeight = ref(500)
 const customerId = ref('')
 const storeId = ref('')
 const storeName = ref('')
@@ -229,6 +295,7 @@ const orderItems = ref([
   { productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }
 ])
 const orderRemark = ref('')
+const orderStoreDealer = ref('')
 
 const totalDealAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (parseFloat(item.dealAmount) || 0), 0))
 const totalPaidAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (parseFloat(item.paidAmount) || 0), 0))
@@ -284,6 +351,7 @@ async function loadCustomer() {
   try {
     const response = await getCustomer(customerId.value)
     customerInfo.value = response.data || response
+    loadOwedPackages()
   } catch (e) { console.error('加载客户失败:', e) }
 }
 
@@ -311,6 +379,9 @@ async function loadOwedPackages() {
     const response = await getOwedPackages(customerId.value)
     const data = response.data || response
     owedPackageList.value = Array.isArray(data) ? data : []
+    if (owedPackageList.value.length === 0 && currentTab.value === 2) {
+      currentTab.value = 0
+    }
   } catch (e) { console.error('加载欠款列表失败:', e) }
 }
 
@@ -356,7 +427,8 @@ async function submitRepay() {
       enterpriseId: selectedPackage.value.enterpriseId,
       enterpriseName: enterpriseName.value,
       storeId: storeId.value,
-      storeName: storeName.value
+      storeName: storeName.value,
+      autoAudit: true
     })
     uni.showToast({ title: '还款成功', icon: 'success' })
     closeRepayPopup()
@@ -398,6 +470,7 @@ async function submitOrder() {
       enterpriseName: enterpriseName.value,
       orderStatus: '1',
       packageName: orderPackageName.value,
+      storeDealer: orderStoreDealer.value,
       remark: orderRemark.value,
       items: validItems.map(i => ({
         productName: i.productName,
@@ -417,6 +490,7 @@ async function submitOrder() {
     orderPackageName.value = ''
     orderItems.value = [{ productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }]
     orderRemark.value = ''
+    orderStoreDealer.value = ''
   } catch (e) {
     console.error('开单失败:', e)
     uni.showToast({ title: '开单失败: ' + (e.message || '未知错误'), icon: 'none' })
@@ -431,16 +505,8 @@ function getOrderStatusName(status) {
 }
 
 function formatTime(time) { if (!time) return ''; return time.substring(0, 16) }
+function formatTimeShort(time) { if (!time) return ''; return time.substring(5, 16).replace('-', '-').replace(' ', ' ') }
 function callPhone(phone) { if (!phone) return; uni.makePhoneCall({ phoneNumber: phone }) }
-
-function calcScrollHeight() {
-  const systemInfo = uni.getSystemInfoSync()
-  const safeBottom = systemInfo.safeAreaInsets?.bottom || 0
-  const navBarHeight = systemInfo.statusBarHeight + 44
-  const tabBarHeight = 44
-  const customerInfoHeight = 70
-  scrollHeight.value = systemInfo.windowHeight - navBarHeight - tabBarHeight - customerInfoHeight - safeBottom - 20
-}
 
 onMounted(() => {
   const pages = getCurrentPages()
@@ -449,14 +515,13 @@ onMounted(() => {
   storeId.value = options.storeId || ''
   storeName.value = decodeURIComponent(options.storeName || '')
   enterpriseName.value = decodeURIComponent(options.enterpriseName || '')
-  calcScrollHeight()
   loadCustomer()
 })
 </script>
 
 <style lang="scss" scoped>
 page { background-color: #F5F6F8; }
-.order-container { height: 100vh; display: flex; flex-direction: column; }
+.order-container { display: flex; flex-direction: column; }
 
 .customer-info { padding: 16rpx 24rpx; background: #fff; border-bottom: 1rpx solid #F2F3F5; }
 .info-row { display: flex; align-items: center; gap: 10rpx; margin-bottom: 6rpx; &:last-child { margin-bottom: 0; } }
@@ -465,7 +530,7 @@ page { background-color: #F5F6F8; }
 .store-name { font-size: 24rpx; color: #86909C; }
 
 .tab-content { flex: 1; }
-.tab-panel { padding: 12rpx 32rpx 40rpx; }
+.tab-panel { padding: 16rpx 24rpx 40rpx; }
 
 .package-name-section { background: #fff; border-radius: 10rpx; padding: 18rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
 .section-title-row { display: flex; align-items: center; gap: 8rpx; margin-bottom: 10rpx; }
@@ -503,36 +568,65 @@ page { background-color: #F5F6F8; }
 .summary-value.paid { color: #00B42A; }
 .summary-value.owed { color: #F53F3F; }
 
+.dealer-section { background: #fff; border-radius: 10rpx; padding: 16rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
+.dealer-input { width: 100%; height: 60rpx; background: #F7F8FA; border-radius: 8rpx; padding: 0 18rpx; font-size: 27rpx; color: #1D2129; box-sizing: border-box; }
 .remark-section { background: #fff; border-radius: 10rpx; padding: 16rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
 .submit-bar { margin-top: 16rpx; padding-bottom: env(safe-area-inset-bottom); }
 
-.record-list { display: flex; flex-direction: column; gap: 12rpx; }
-.record-card { background: #fff; border-radius: 10rpx; padding: 20rpx; border: 1rpx solid #EDEEF2; }
-.record-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10rpx; }
-.record-no { font-size: 25rpx; color: #1D2129; font-weight: 500; }
-.record-status { font-size: 22rpx; padding: 4rpx 10rpx; border-radius: 4rpx;
-  &.status-0 { background: #FFF7E8; color: #FF7D00; }
-  &.status-1 { background: #E8FFEA; color: #00B42A; }
-  &.status-2 { background: #F2F3F5; color: #86909C; }
+.record-list { display: flex; flex-direction: column; gap: 16rpx; }
+
+.record-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
-.record-body { display: flex; justify-content: space-between; align-items: center; }
-.record-amounts { display: flex; align-items: center; gap: 10rpx; }
-.record-amount { font-size: 28rpx; font-weight: 600; color: #FF6B35; }
-.record-paid { font-size: 22rpx; color: #00B42A; }
-.record-time { font-size: 21rpx; color: #C9CDD4; }
-.record-remark { margin-top: 6rpx; }
-.remark-text { font-size: 23rpx; color: #909399; }
+
+.rc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.rc-header-left { display: flex; align-items: center; gap: 8rpx; }
+.rc-no { font-size: 26rpx; font-weight: 600; color: #1D2129; letter-spacing: 0.5rpx; }
+.rc-status { font-size: 20rpx; padding: 4rpx 14rpx; border-radius: 20rpx; font-weight: 500;
+  &.st-0 { background: #FFF7E8; color: #FF7D00; }
+  &.st-1 { background: #E8FFEA; color: #00B42A; }
+  &.st-2 { background: #F2F3F5; color: #86909C; }
+  &.st-3 { background: #EEF2FF; color: #3D6DF7; }
+  &.st-4 { background: #F2F3F5; color: #C9CDD4; }
+}
+
+.rc-items { display: flex; flex-direction: column; gap: 10rpx; margin-bottom: 4rpx; }
+.rc-item-row { display: flex; align-items: center; gap: 12rpx; padding: 10rpx 16rpx; background: #FAFBFC; border-radius: 10rpx; }
+.rc-item-name { flex: 1; font-size: 25rpx; color: #1D2129; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-item-qty { font-size: 23rpx; color: #86909C; flex-shrink: 0; }
+.rc-item-price { font-size: 25rpx; color: #1D2129; font-weight: 600; flex-shrink: 0; }
+
+.rc-divider { height: 1rpx; background: linear-gradient(90deg, transparent, #E5E6EB, transparent); margin: 16rpx 0; }
+
+.rc-amounts { display: flex; align-items: center; gap: 24rpx; padding: 16rpx 20rpx; background: linear-gradient(135deg, #F7F8FA, #FDFEFF); border-radius: 12rpx; margin-bottom: 12rpx; }
+.rc-amount-group { display: flex; align-items: baseline; gap: 6rpx; }
+.rc-amt-label { font-size: 21rpx; color: #86909C; }
+.rc-amt-deal { font-size: 28rpx; font-weight: 700; color: #FF6B35; }
+.rc-amt-paid { font-size: 28rpx; font-weight: 700; color: #00B42A; }
+.rc-amt-owed { font-size: 26rpx; font-weight: 700; color: #F53F3F; }
+
+.rc-footer { display: flex; justify-content: space-between; align-items: center; }
+.rc-meta-row { display: flex; align-items: center; gap: 8rpx; }
+.rc-meta-item { display: flex; align-items: center; gap: 4rpx; white-space: nowrap; flex-shrink: 0; }
+.rc-meta-val { font-size: 22rpx; color: #86909C; white-space: nowrap; }
+.rc-meta-sep { font-size: 18rpx; color: #E5E6EB; margin: 0 4rpx; }
+.rc-time { font-size: 21rpx; color: #C9CDD4; }
+
+.rc-remark { display: flex; align-items: flex-start; gap: 6rpx; margin-top: 12rpx; padding-top: 12rpx; border-top: 1rpx dashed #EDEEF2; }
+.rc-remark-text { font-size: 23rpx; color: #86909C; line-height: 1.5; }
 .record-type { font-size: 24rpx; color: #3D6DF7; font-weight: 500; }
 .record-content { font-size: 25rpx; color: #4E5969; }
 
-.owed-card { border-left: 4rpx solid #F53F3F; }
-.owed-amount { font-size: 26rpx; color: #F53F3F; font-weight: 600; }
-.owed-info { display: flex; flex-direction: column; gap: 6rpx; }
-.owed-label { font-size: 23rpx; color: #86909C; }
-.repay-btn { padding: 10rpx 28rpx; background: linear-gradient(135deg, #3D6DF7 0%, #5B8DEF 100%); border-radius: 8rpx;
-  text { font-size: 24rpx; color: #fff; font-weight: 500; }
+.rc-owed-card { border-left: 6rpx solid #F53F3F; }
+.rc-owed-badge { font-size: 24rpx; font-weight: 700; color: #F53F3F; background: #FEF2F2; padding: 4rpx 16rpx; border-radius: 20rpx; }
+.rc-owed-info { gap: 4rpx; }
+.rc-action-row { display: flex; justify-content: flex-end; padding: 8rpx 0; }
+.rc-repay-btn { display: flex; align-items: center; gap: 8rpx; padding: 14rpx 40rpx; background: linear-gradient(135deg, #F53F3F 0%, #FF7875 100%); border-radius: 30rpx;
+  .rc-repay-text { font-size: 26rpx; color: #fff; font-weight: 600; }
 }
-.record-time-row { margin-top: 10rpx; padding-top: 10rpx; border-top: 1rpx solid #F5F6F7; }
 
 .repay-popup { background: #fff; border-radius: 20rpx 20rpx 0 0; max-height: 80vh; }
 .popup-header { display: flex; justify-content: space-between; align-items: center; padding: 28rpx; border-bottom: 1rpx solid #F2F3F5; }

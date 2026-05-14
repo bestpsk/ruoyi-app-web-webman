@@ -12,10 +12,10 @@ class BizOperationRecordService
     public function selectRecordList($params = [])
     {
         $query = BizOperationRecord::query();
-        if (!empty($params['customer_id'])) $query->where('customer_id', $params['customer_id']);
-        if (!empty($params['enterprise_id'])) $query->where('enterprise_id', $params['enterprise_id']);
-        if (!empty($params['store_id'])) $query->where('store_id', $params['store_id']);
-        if (!empty($params['package_id'])) $query->where('package_id', $params['package_id']);
+        if (!empty($params['customer_id'])) $query->where('biz_operation_record.customer_id', $params['customer_id']);
+        if (!empty($params['enterprise_id'])) $query->where('biz_operation_record.enterprise_id', $params['enterprise_id']);
+        if (!empty($params['store_id'])) $query->where('biz_operation_record.store_id', $params['store_id']);
+        if (!empty($params['package_id'])) $query->where('biz_operation_record.package_id', $params['package_id']);
         if (!empty($params['operation_date'])) $query->where('operation_date', $params['operation_date']);
         if (isset($params['operation_type']) && $params['operation_type'] !== '') $query->where('operation_type', $params['operation_type']);
         if (!empty($params['start_date'])) $query->where('operation_date', '>=', $params['start_date']);
@@ -25,6 +25,8 @@ class BizOperationRecordService
         if (!empty($params['satisfaction'])) $query->where('satisfaction', $params['satisfaction']);
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
+        $query->leftJoin('biz_customer_package as cp', 'biz_operation_record.package_id', '=', 'cp.package_id')
+            ->addSelect('biz_operation_record.*', 'cp.package_name');
         return $query->orderBy('record_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 

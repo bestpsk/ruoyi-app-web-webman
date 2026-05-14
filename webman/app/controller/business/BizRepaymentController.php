@@ -60,8 +60,10 @@ class BizRepaymentController
         
         $service = new BizRepaymentService();
         
+        $autoAudit = !empty($data['auto_audit']) || !empty($data['autoAudit']);
+        
         try {
-            $result = $service->insertRepayment($data);
+            $result = $service->insertRepayment($data, $autoAudit);
             return AjaxResult::success($result);
         } catch (\Exception $e) {
             return AjaxResult::error('添加还款记录失败：' . $e->getMessage());

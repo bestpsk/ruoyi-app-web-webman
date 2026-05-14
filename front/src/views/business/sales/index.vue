@@ -127,6 +127,10 @@
                   </template>
                 </el-table-column>
               </el-table>
+              <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px">
+                <span class="stat-label" style="font-size:13px; white-space:nowrap">门店成交人</span>
+                <el-input v-model="orderStoreDealer" placeholder="请输入门店成交人" clearable style="flex:1" size="small" />
+              </div>
               <div style="margin-top: 12px; background: #fafafa; padding: 12px; border-radius: 4px">
                 <div style="margin-bottom: 6px; font-size:13px">备注</div>
                 <el-input v-model="orderCustomerFeedback" type="textarea" :rows="2" placeholder="请输入顾客反馈..." size="small" />
@@ -471,17 +475,8 @@
                 <el-table-column label="欠款金额" min-width="110" align="right">
                   <template #default="scope">{{ Number(scope.row.owedAmount || 0).toFixed(2) }}</template>
                 </el-table-column>
-                <el-table-column label="订单状态" min-width="90" align="center">
-                  <template #default="scope">
-                    <el-tag :type="scope.row.orderStatus === '1' ? 'success' : scope.row.orderStatus === '2' ? 'info' : scope.row.orderStatus === '3' ? 'warning' : scope.row.orderStatus === '4' ? 'info' : 'warning'" size="small">{{ getOrderStatusName(scope.row.orderStatus) }}</el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column label="企业审核" min-width="90" align="center">
-                  <template #default="scope"><el-tag :type="scope.row.enterpriseAuditStatus === '1' ? 'success' : 'warning'" size="small">{{ scope.row.enterpriseAuditStatus === '1' ? '已审核' : '未审核' }}</el-tag></template>
-                </el-table-column>
-                <el-table-column label="财务审核" min-width="90" align="center">
-                  <template #default="scope"><el-tag :type="scope.row.financeAuditStatus === '1' ? 'success' : 'warning'" size="small">{{ scope.row.financeAuditStatus === '1' ? '已审核' : '未审核' }}</el-tag></template>
-                </el-table-column>
+                <el-table-column label="门店成交人" prop="storeDealer" min-width="100" show-overflow-tooltip />
+                <el-table-column label="成交员工" prop="creatorUserName" min-width="100" show-overflow-tooltip />
                 <el-table-column label="备注" prop="remark" min-width="120" show-overflow-tooltip />
                 <el-table-column label="创建时间" prop="createTime" min-width="160" />
               </el-table>
@@ -503,13 +498,21 @@
                 <el-table-column label="类型" width="80" align="center">
                   <template #default="scope"><el-tag :type="scope.row.operationType === '1' ? 'warning' : 'primary'" size="small">{{ scope.row.operationType === '1' ? '体验' : '持卡' }}</el-tag></template>
                 </el-table-column>
-                <el-table-column label="持卡编号" prop="packageNo" width="140" />
-                <el-table-column label="品项" prop="productName" />
+                <el-table-column label="套餐名称" min-width="140" show-overflow-tooltip>
+                  <template #default="scope">
+                    {{ scope.row.packageName || scope.row.packageNo || '-' }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="品项" prop="productName" min-width="100" show-overflow-tooltip />
                 <el-table-column label="次数" prop="operationQuantity" width="60" align="center" />
                 <el-table-column label="消耗/体验价" width="100" align="center">
                   <template #default="scope">{{ scope.row.operationType === '1' ? scope.row.trialPrice : scope.row.consumeAmount }}</template>
                 </el-table-column>
-                <el-table-column label="操作人" prop="operatorUserName" width="90" />
+                <el-table-column label="操作人" width="100" align="center">
+                  <template #default="scope">
+                    {{ getOperatorRealName(scope.row) }}
+                  </template>
+                </el-table-column>
                 <el-table-column label="满意度" width="120" align="center">
                   <template #default="scope"><el-rate :model-value="scope.row.satisfaction" disabled size="small" v-if="scope.row.satisfaction" /></template>
                 </el-table-column>
@@ -723,6 +726,7 @@ const customerList = ref([])
 const packageList = ref([])
 const userOptions = ref([])
 const orderItems = ref([])
+const orderStoreDealer = ref('')
 const orderCustomerFeedback = ref('')
 const orderPackageName = ref('')
 const orderRecordList = ref([])
@@ -849,6 +853,7 @@ function handleSelectCustomer(item) {
   activeTab.value = 'order'
   orderItems.value = []
   orderCustomerFeedback.value = ''
+  orderStoreDealer.value = ''
   resetOperationForm()
   selectedOperationItems.value = []
   showTrialForm.value = false
@@ -884,6 +889,7 @@ function submitOrder() {
     storeName: store?.storeName,
     orderStatus: '1',
     packageName: orderPackageName.value,
+    storeDealer: orderStoreDealer.value,
     customerFeedback: '',
     remark: orderCustomerFeedback.value,
     items: orderItems.value
@@ -892,6 +898,7 @@ function submitOrder() {
     proxy.$modal.msgSuccess('开单成功')
     orderItems.value = []
     orderCustomerFeedback.value = ''
+    orderStoreDealer.value = ''
     orderPackageName.value = ''
     loadPackageList()
     loadOrderRecords()
@@ -1071,6 +1078,12 @@ function loadOperationRecords() {
   listOperation(params).then(res => { operationRecordList.value = res.rows || [] })
 }
 
+function getOperatorRealName(row) {
+  if (!row.operatorUserId) return row.operatorUserName || '-'
+  const user = userOptions.value.find(u => u.userId === row.operatorUserId)
+  return user?.real_name || user?.nickName || row.operatorUserName || '-'
+}
+
 function loadOwedPackages() {
   if (!currentCustomerId.value) return
   getOwedPackages(currentCustomer.value.customerId).then(res => {
@@ -1126,7 +1139,8 @@ function submitRepay() {
     enterpriseId: currentEnterpriseId.value,
     enterpriseName: ent ? ent.enterpriseName : '',
     storeId: currentStoreId.value,
-    storeName: store ? store.storeName : ''
+    storeName: store ? store.storeName : '',
+    autoAudit: true
   }).then(() => {
     proxy.$modal.msgSuccess('还款成功')
     repayDialogVisible.value = false

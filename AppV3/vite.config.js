@@ -3,6 +3,7 @@ import uni from '@dcloudio/vite-plugin-uni'
 
 export default defineConfig({
   plugins: [uni()],
+  transpileDependencies: ['uview-plus'],
   server: {
     port: 5174,
     host: '0.0.0.0',

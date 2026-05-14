@@ -68,11 +68,15 @@ class BizRepaymentService
         return BizRepaymentRecord::find($repaymentId);
     }
 
-    public function insertRepayment($data)
+    public function insertRepayment($data, $autoAudit = false)
     {
         $data['repayment_no'] = $this->generateRepaymentNo();
         $data['create_time'] = date('Y-m-d H:i:s');
-        $data['status'] = '0';
+        $data['status'] = $autoAudit ? '1' : '0';
+        if ($autoAudit) {
+            $data['audit_by'] = $data['creator_user_name'] ?? $data['create_by'] ?? '';
+            $data['audit_time'] = date('Y-m-d H:i:s');
+        }
         
         Db::beginTransaction();
         try {
@@ -82,6 +86,10 @@ class BizRepaymentService
             $data['repayment_order_no'] = $order->order_no;
             
             $repayment = BizRepaymentRecord::create($data);
+            
+            if ($autoAudit) {
+                $this->updatePackageOwedAmount($repayment->package_id, $repayment->repayment_amount);
+            }
             
             Db::commit();
 

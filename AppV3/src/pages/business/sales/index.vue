@@ -19,8 +19,49 @@
       </view>
     </view>
 
-    <u-picker :show="showEnterprisePicker" :columns="[enterpriseColumns]" keyName="enterpriseName" title="选择企业" @confirm="onEnterpriseConfirm" @cancel="showEnterprisePicker = false" @close="showEnterprisePicker = false"></u-picker>
-    <u-picker :show="showStorePicker" :columns="[storeColumns]" keyName="storeName" title="选择门店" @confirm="onStoreConfirm" @cancel="showStorePicker = false" @close="showStorePicker = false"></u-picker>
+    <u-popup :show="showEnterprisePicker" mode="bottom" round="16" @close="showEnterprisePicker = false">
+      <view class="picker-popup">
+        <view class="popup-header">
+          <text class="popup-title">选择企业</text>
+          <view class="popup-close" @click="showEnterprisePicker = false">
+            <u-icon name="close" size="20" color="#86909C"></u-icon>
+          </view>
+        </view>
+        <view class="popup-search">
+          <u-icon name="search" size="16" color="#86909C"></u-icon>
+          <input class="popup-input" type="text" v-model="enterpriseSearchKeyword" placeholder="搜索企业名称" placeholder-class="popup-placeholder" />
+        </view>
+        <scroll-view scroll-y class="popup-list">
+          <view v-for="item in filteredEnterpriseList" :key="item.enterpriseId" class="popup-item" :class="{ active: item.enterpriseId === currentEnterpriseId }" @click="onEnterpriseSelect(item)">
+            <text class="item-name">{{ item.enterpriseName }}</text>
+            <u-icon v-if="item.enterpriseId === currentEnterpriseId" name="checkmark" size="18" color="#3D6DF7"></u-icon>
+          </view>
+          <u-empty v-if="filteredEnterpriseList.length === 0" mode="search" text="未找到匹配企业" :marginTop="40"></u-empty>
+        </scroll-view>
+      </view>
+    </u-popup>
+
+    <u-popup :show="showStorePicker" mode="bottom" round="16" @close="showStorePicker = false">
+      <view class="picker-popup">
+        <view class="popup-header">
+          <text class="popup-title">选择门店</text>
+          <view class="popup-close" @click="showStorePicker = false">
+            <u-icon name="close" size="20" color="#86909C"></u-icon>
+          </view>
+        </view>
+        <view class="popup-search">
+          <u-icon name="search" size="16" color="#86909C"></u-icon>
+          <input class="popup-input" type="text" v-model="storeSearchKeyword" placeholder="搜索门店名称" placeholder-class="popup-placeholder" />
+        </view>
+        <scroll-view scroll-y class="popup-list">
+          <view v-for="item in filteredStoreList" :key="item.storeId" class="popup-item" :class="{ active: item.storeId === currentStoreId }" @click="onStoreSelect(item)">
+            <text class="item-name">{{ item.storeName }}</text>
+            <u-icon v-if="item.storeId === currentStoreId" name="checkmark" size="18" color="#3D6DF7"></u-icon>
+          </view>
+          <u-empty v-if="filteredStoreList.length === 0" mode="search" text="未找到匹配门店" :marginTop="40"></u-empty>
+        </scroll-view>
+      </view>
+    </u-popup>
 
     <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" v-if="currentStoreId">
       <view v-if="customerList.length > 0" class="card-list">
@@ -58,11 +99,13 @@
     <view class="fab-btn" @click="goAddCustomer" v-if="currentStoreId">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
+
+
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { listEnterprise } from '@/api/business/enterprise'
 import { searchStore } from '@/api/business/store'
 import { searchCustomer, addCustomer } from '@/api/business/customer'
@@ -77,9 +120,27 @@ const currentStoreName = ref('')
 const customerKeyword = ref('')
 const showEnterprisePicker = ref(false)
 const showStorePicker = ref(false)
+const enterpriseSearchKeyword = ref('')
+const storeSearchKeyword = ref('')
 const scrollHeight = ref(600)
 
 let searchTimer = null
+
+const filteredEnterpriseList = computed(() => {
+  if (!enterpriseSearchKeyword.value) return enterpriseColumns.value
+  const kw = enterpriseSearchKeyword.value.toLowerCase()
+  return enterpriseColumns.value.filter(item =>
+    (item.enterpriseName || '').toLowerCase().includes(kw)
+  )
+})
+
+const filteredStoreList = computed(() => {
+  if (!storeSearchKeyword.value) return storeColumns.value
+  const kw = storeSearchKeyword.value.toLowerCase()
+  return storeColumns.value.filter(item =>
+    (item.storeName || '').toLowerCase().includes(kw)
+  )
+})
 
 async function loadEnterpriseOptions() {
   try {
@@ -89,14 +150,14 @@ async function loadEnterpriseOptions() {
   } catch (e) { console.error('加载企业列表失败:', e) }
 }
 
-async function onEnterpriseConfirm(e) {
-  const item = e.value[0]
+async function onEnterpriseSelect(item) {
   currentEnterpriseId.value = item.enterpriseId
   currentEnterpriseName.value = item.enterpriseName
   currentStoreId.value = ''
   currentStoreName.value = ''
   storeColumns.value = []
   customerList.value = []
+  enterpriseSearchKeyword.value = ''
   showEnterprisePicker.value = false
   try {
     const response = await searchStore('', item.enterpriseId)
@@ -105,10 +166,10 @@ async function onEnterpriseConfirm(e) {
   } catch (e) { console.error('加载门店列表失败:', e) }
 }
 
-async function onStoreConfirm(e) {
-  const item = e.value[0]
+async function onStoreSelect(item) {
   currentStoreId.value = item.storeId
   currentStoreName.value = item.storeName
+  storeSearchKeyword.value = ''
   showStorePicker.value = false
   loadCustomerList()
 }
@@ -136,7 +197,7 @@ function goCreateOrder(item) {
 }
 
 function goCreateOperation(item) {
-  uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${item.customerId}&customerName=${item.customerName}&storeId=${currentStoreId.value}&storeName=${currentStoreName.value}&enterpriseName=${currentEnterpriseName.value}` })
+  uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${item.customerId}&customerName=${encodeURIComponent(item.customerName)}&storeId=${currentStoreId.value}&storeName=${encodeURIComponent(currentStoreName.value)}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${encodeURIComponent(currentEnterpriseName.value)}` })
 }
 
 function goAddCustomer() {
@@ -214,4 +275,20 @@ page { background-color: #F5F7FA; }
 .fab-btn { position: fixed; right: 32rpx; bottom: 120rpx; width: 100rpx; height: 100rpx; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #FF8F5E); display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 24rpx rgba(255,107,53,0.4);
   &:active { transform: scale(0.95); opacity: 0.9; }
 }
+
+.picker-popup { background: #fff; border-radius: 24rpx 24rpx 0 0; max-height: 80vh; display: flex; flex-direction: column; }
+.popup-header { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 32rpx; border-bottom: 1rpx solid #F2F3F5; }
+.popup-title { font-size: 30rpx; font-weight: 600; color: #1D2129; }
+.popup-close { padding: 8rpx; }
+.popup-search { display: flex; align-items: center; margin: 20rpx 24rpx; padding: 0 24rpx; height: 72rpx; background: #F7F8FA; border-radius: 12rpx; gap: 12rpx; }
+.popup-input { flex: 1; height: 72rpx; font-size: 27rpx; color: #1D2129; }
+.popup-placeholder { color: #C9CDD4; font-size: 27rpx; }
+.popup-list { max-height: 50vh; padding: 0 8rpx; padding-bottom: env(safe-area-inset-bottom); }
+.popup-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 20rpx; border-bottom: 1rpx solid #F5F6F7;
+  &:active { background: #F7F8FA; }
+  &.active { background: #EEF2FF; }
+  .item-name { font-size: 28rpx; color: #1D2129; }
+  &.active .item-name { color: #3D6DF7; font-weight: 500; }
+}
+
 </style>
