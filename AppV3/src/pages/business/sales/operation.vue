@@ -228,6 +228,7 @@ import { getPackageByCustomer } from '@/api/business/customerPackage'
 import { listOperation, addOperation } from '@/api/business/operationRecord'
 import { listEmployeeConfig } from '@/api/business/employeeConfig'
 import { useUserStore } from '@/store/modules/user'
+import upload from '@/utils/upload'
 
 const userStore = useUserStore()
 
@@ -379,8 +380,8 @@ async function submitOperation() {
         operatorUserName: form.operatorName,
         satisfaction: form.satisfaction,
         customerFeedback: form.customerFeedback,
-        beforePhoto: form.beforePhoto.join(','),
-        afterPhoto: form.afterPhoto.join(','),
+        beforePhoto: form.beforePhoto.map(p => p.name).join(','),
+        afterPhoto: form.afterPhoto.map(p => p.name).join(','),
         remark: form.remark,
         enterpriseId: enterpriseId.value,
         storeId: storeId.value
@@ -398,12 +399,28 @@ async function submitOperation() {
   }
 }
 
-function onBeforePhoto(e) {
-  if (e.file) form.beforePhoto.push({ url: e.url, name: e.name || 'photo' })
+async function onBeforePhoto(e) {
+  if (e.file) {
+    try {
+      const res = await upload({ url: '/common/upload', name: 'file', filePath: e.url })
+      const url = res.url || res.fileName
+      form.beforePhoto.push({ url: e.url, name: url })
+    } catch (err) {
+      uni.showToast({ title: '上传失败', icon: 'none' })
+    }
+  }
 }
 
-function onAfterPhoto(e) {
-  if (e.file) form.afterPhoto.push({ url: e.url, name: e.name || 'photo' })
+async function onAfterPhoto(e) {
+  if (e.file) {
+    try {
+      const res = await upload({ url: '/common/upload', name: 'file', filePath: e.url })
+      const url = res.url || res.fileName
+      form.afterPhoto.push({ url: e.url, name: url })
+    } catch (err) {
+      uni.showToast({ title: '上传失败', icon: 'none' })
+    }
+  }
 }
 
 function onDateConfirm(e) {

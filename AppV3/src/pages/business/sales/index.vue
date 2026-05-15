@@ -101,15 +101,171 @@
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
 
+    <!-- 新增客户弹窗 -->
+    <u-popup :show="showAddCustomerPopup" mode="center" round="16" :closeOnClickOverlay="false">
+      <view class="add-customer-popup">
+        <!-- 标题栏 -->
+        <view class="popup-header">
+          <text class="popup-title">新增客户</text>
+          <view class="popup-close" @click="closeAddCustomerPopup">
+            <u-icon name="close" size="20" color="#86909C"></u-icon>
+          </view>
+        </view>
+
+        <!-- 表单内容 -->
+        <scroll-view scroll-y class="form-scroll">
+          <!-- 姓名 -->
+          <view class="form-item">
+            <view class="form-label">姓名 <text class="required">*</text></view>
+            <input
+              class="form-input"
+              type="text"
+              v-model="customerForm.customerName"
+              placeholder="请输入客户姓名"
+              placeholder-class="form-placeholder"
+              :class="{ error: formErrors.customerName }"
+            />
+          </view>
+
+          <!-- 性别 -->
+          <view class="form-item">
+            <view class="form-label">性别</view>
+            <view class="gender-selector">
+              <view
+                v-for="option in genderOptions"
+                :key="option.value"
+                class="gender-option"
+                :class="{ active: customerForm.gender === option.value }"
+                :style="{ borderColor: customerForm.gender === option.value ? option.color : '#E5E6EB' }"
+                @click="customerForm.gender = option.value"
+              >
+                <u-icon :name="option.icon" size="18" :color="customerForm.gender === option.value ? option.color : '#86909C'"></u-icon>
+                <text class="option-text" :style="{ color: customerForm.gender === option.value ? option.color : '#4E5969' }">{{ option.label }}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 年龄 -->
+          <view class="form-item">
+            <view class="form-label">年龄</view>
+            <input
+              class="form-input"
+              type="number"
+              v-model="customerForm.age"
+              placeholder="请输入年龄"
+              placeholder-class="form-placeholder"
+            />
+          </view>
+
+          <!-- 客户标签 -->
+          <view class="form-item">
+            <view class="form-label">客户标签</view>
+            <input
+              class="form-input"
+              type="text"
+              v-model="customerForm.tag"
+              placeholder="多个标签用逗号分隔，如：VIP,老客户"
+              placeholder-class="form-placeholder"
+            />
+          </view>
+
+          <!-- 备注 -->
+          <view class="form-item">
+            <view class="form-label">备注</view>
+            <textarea
+              class="form-textarea"
+              v-model="customerForm.remark"
+              placeholder="请输入备注信息（选填）"
+              placeholder-class="form-placeholder"
+              :maxlength="200"
+              auto-height
+            ></textarea>
+            <text class="textarea-count">{{ customerForm.remark.length }}/200</text>
+          </view>
+        </scroll-view>
+
+        <!-- 操作按钮 -->
+        <view class="form-actions">
+          <button class="btn-cancel" @click="closeAddCustomerPopup">取消</button>
+          <button class="btn-confirm" @click="submitAddCustomer">确定</button>
+        </view>
+      </view>
+    </u-popup>
+
 
   </view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { listEnterprise } from '@/api/business/enterprise'
 import { searchStore } from '@/api/business/store'
 import { searchCustomer, addCustomer } from '@/api/business/customer'
+
+const STORAGE_KEYS = {
+  enterprise: 'sales_selected_enterprise',
+  store: 'sales_selected_store'
+}
+
+function saveSelectionToStorage() {
+  const enterpriseData = currentEnterpriseId.value ? {
+    enterpriseId: currentEnterpriseId.value,
+    enterpriseName: currentEnterpriseName.value
+  } : null
+  const storeData = currentStoreId.value ? {
+    storeId: currentStoreId.value,
+    storeName: currentStoreName.value
+  } : null
+
+  if (enterpriseData) {
+    uni.setStorageSync(STORAGE_KEYS.enterprise, enterpriseData)
+  } else {
+    uni.removeStorageSync(STORAGE_KEYS.enterprise)
+  }
+
+  if (storeData) {
+    uni.setStorageSync(STORAGE_KEYS.store, storeData)
+  } else {
+    uni.removeStorageSync(STORAGE_KEYS.store)
+  }
+}
+
+async function loadSelectionFromStorage() {
+  try {
+    const cachedEnterprise = uni.getStorageSync(STORAGE_KEYS.enterprise)
+    const cachedStore = uni.getStorageSync(STORAGE_KEYS.store)
+
+    if (cachedEnterprise && cachedEnterprise.enterpriseId) {
+      const exists = enterpriseColumns.value.some(item => item.enterpriseId === cachedEnterprise.enterpriseId)
+      if (exists) {
+        currentEnterpriseId.value = cachedEnterprise.enterpriseId
+        currentEnterpriseName.value = cachedEnterprise.enterpriseName
+
+        if (cachedStore && cachedStore.storeId) {
+          try {
+            const response = await searchStore('', cachedEnterprise.enterpriseId)
+            const data = response.data || response
+            storeColumns.value = data.rows || data || []
+
+            const storeExists = storeColumns.value.some(item => item.storeId === cachedStore.storeId)
+            if (storeExists) {
+              currentStoreId.value = cachedStore.storeId
+              currentStoreName.value = cachedStore.storeName
+              loadCustomerList()
+            }
+          } catch (e) {
+            console.error('加载门店列表失败:', e)
+          }
+        }
+      } else {
+        uni.removeStorageSync(STORAGE_KEYS.enterprise)
+        uni.removeStorageSync(STORAGE_KEYS.store)
+      }
+    }
+  } catch (e) {
+    console.error('加载缓存选择失败:', e)
+  }
+}
 
 const enterpriseColumns = ref([])
 const storeColumns = ref([])
@@ -124,6 +280,22 @@ const showStorePicker = ref(false)
 const enterpriseSearchKeyword = ref('')
 const storeSearchKeyword = ref('')
 const scrollHeight = ref(600)
+
+const showAddCustomerPopup = ref(false)
+const customerForm = reactive({
+  customerName: '',
+  gender: '',
+  age: '',
+  tag: '',
+  remark: ''
+})
+const formErrors = reactive({
+  customerName: false
+})
+const genderOptions = [
+  { label: '男', value: '0', icon: 'man', color: '#3D6DF7' },
+  { label: '女', value: '1', icon: 'woman', color: '#FF6B9D' }
+]
 
 let searchTimer = null
 
@@ -160,6 +332,7 @@ async function onEnterpriseSelect(item) {
   customerList.value = []
   enterpriseSearchKeyword.value = ''
   showEnterprisePicker.value = false
+  saveSelectionToStorage()
   try {
     const response = await searchStore('', item.enterpriseId)
     const data = response.data || response
@@ -172,6 +345,7 @@ async function onStoreSelect(item) {
   currentStoreName.value = item.storeName
   storeSearchKeyword.value = ''
   showStorePicker.value = false
+  saveSelectionToStorage()
   loadCustomerList()
 }
 
@@ -205,19 +379,67 @@ function goArchive(item) {
   uni.navigateTo({ url: `/pages/business/sales/archive?customerId=${item.customerId}&customerName=${encodeURIComponent(item.customerName)}&storeId=${currentStoreId.value}&storeName=${encodeURIComponent(currentStoreName.value)}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${encodeURIComponent(currentEnterpriseName.value)}` })
 }
 
-function goAddCustomer() {
-  uni.showModal({
-    title: '新增客户', editable: true, placeholderText: '请输入客户姓名',
-    success: async (res) => {
-      if (res.confirm && res.content) {
-        try {
-          await addCustomer({ customerName: res.content, enterpriseId: currentEnterpriseId.value, storeId: currentStoreId.value, status: '0' })
-          uni.showToast({ title: '新增成功', icon: 'success' })
-          loadCustomerList()
-        } catch (e) { console.error('新增客户失败:', e) }
-      }
+function openAddCustomerPopup() {
+  resetCustomerForm()
+  showAddCustomerPopup.value = true
+}
+
+function closeAddCustomerPopup() {
+  showAddCustomerPopup.value = false
+  setTimeout(() => resetCustomerForm(), 300)
+}
+
+function resetCustomerForm() {
+  customerForm.customerName = ''
+  customerForm.gender = ''
+  customerForm.age = ''
+  customerForm.tag = ''
+  customerForm.remark = ''
+  formErrors.customerName = false
+}
+
+function validateCustomerForm() {
+  let isValid = true
+  formErrors.customerName = !customerForm.customerName.trim()
+  if (formErrors.customerName) isValid = false
+  return isValid
+}
+
+async function submitAddCustomer() {
+  if (!validateCustomerForm()) {
+    uni.showToast({ title: '请填写必填项', icon: 'none' })
+    return
+  }
+
+  try {
+    const data = {
+      customerName: customerForm.customerName.trim(),
+      enterpriseId: currentEnterpriseId.value,
+      storeId: currentStoreId.value,
+      status: '0'
     }
-  })
+
+    if (customerForm.gender) data.gender = customerForm.gender
+    if (customerForm.age) data.age = parseInt(customerForm.age)
+    if (customerForm.tag.trim()) data.tag = customerForm.tag.trim()
+    if (customerForm.remark.trim()) data.remark = customerForm.remark.trim()
+
+    await addCustomer(data)
+    uni.showToast({ title: '新增成功', icon: 'success' })
+    closeAddCustomerPopup()
+    loadCustomerList()
+  } catch (e) {
+    console.error('新增客户失败:', e)
+    uni.showToast({ title: '新增失败', icon: 'error' })
+  }
+}
+
+function goAddCustomer() {
+  if (!currentEnterpriseId.value || !currentStoreId.value) {
+    uni.showToast({ title: '请先选择企业和门店', icon: 'none' })
+    return
+  }
+  openAddCustomerPopup()
 }
 
 function calcScrollHeight() {
@@ -225,7 +447,11 @@ function calcScrollHeight() {
   scrollHeight.value = systemInfo.windowHeight - 200
 }
 
-onMounted(() => { calcScrollHeight(); loadEnterpriseOptions() })
+onMounted(async () => {
+  calcScrollHeight()
+  await loadEnterpriseOptions()
+  loadSelectionFromStorage()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -296,5 +522,186 @@ page { background-color: #F5F7FA; }
   .item-name { font-size: 28rpx; color: #1D2129; }
   &.active .item-name { color: #3D6DF7; font-weight: 500; }
 }
+
+/* 新增客户弹窗样式 */
+.add-customer-popup {
+  width: 650rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx;
+  border-bottom: 1rpx solid #F2F3F5;
+}
+
+.popup-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.popup-close {
+  padding: 8rpx;
+}
+
+.form-scroll {
+  max-height: 60vh;
+  padding: 24rpx 32rpx;
+}
+
+.form-item {
+  margin-bottom: 28rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-label {
+  font-size: 26rpx;
+  color: #4E5969;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+
+  .required {
+    color: #F53F3F;
+    margin-left: 4rpx;
+  }
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  background: #F7F8FA;
+  border: 2rpx solid transparent;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+  box-sizing: border-box;
+  transition: all 0.3s;
+
+  &:focus {
+    background: #fff;
+    border-color: #3D6DF7;
+  }
+
+  &.error {
+    border-color: #F53F3F;
+    background: #FFF2F0;
+  }
+}
+
+.form-placeholder {
+  color: #C9CDD4;
+  font-size: 28rpx;
+}
+
+.gender-selector {
+  display: flex;
+  gap: 20rpx;
+}
+
+.gender-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 80rpx;
+  background: #F7F8FA;
+  border: 2rpx solid #E5E6EB;
+  border-radius: 12rpx;
+  transition: all 0.3s;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.active {
+    background: #EEF2FF;
+  }
+
+  .option-text {
+    font-size: 28rpx;
+    font-weight: 500;
+  }
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 140rpx;
+  max-height: 240rpx;
+  background: #F7F8FA;
+  border: 2rpx solid transparent;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+  box-sizing: border-box;
+  line-height: 1.5;
+  transition: all 0.3s;
+
+  &:focus {
+    background: #fff;
+    border-color: #3D6DF7;
+  }
+}
+
+.textarea-count {
+  display: block;
+  text-align: right;
+  font-size: 22rpx;
+  color: #C9CDD4;
+  margin-top: 8rpx;
+}
+
+.form-actions {
+  display: flex;
+  gap: 20rpx;
+  padding: 24rpx 32rpx 32rpx;
+  border-top: 1rpx solid #F2F3F5;
+}
+
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.btn-cancel {
+  background: #F2F3F5;
+  color: #4E5969;
+
+  &:active {
+    background: #E5E6EB;
+  }
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #3D6DF7, #4A7AEF);
+  color: #fff;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
 
 </style>

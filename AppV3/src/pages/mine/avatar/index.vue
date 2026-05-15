@@ -38,11 +38,12 @@ async function uploadImage() {
     uni.showToast({ title: '请先选择头像', icon: 'none' })
     return
   }
-  uni.showLoading({ title: '上传�?..' })
+  uni.showLoading({ title: '上传�?..' })
   try {
     const data = { name: 'avatarfile', filePath: selectedImage.value }
     const response = await uploadAvatar(data)
-    userStore.avatar = baseUrl + response.imgUrl
+    const imgUrl = response.imgUrl
+    userStore.avatar = imgUrl.startsWith('http') ? imgUrl : baseUrl + imgUrl
     uni.showToast({ title: '修改成功', icon: 'success' })
     setTimeout(() => {
       uni.navigateBack()

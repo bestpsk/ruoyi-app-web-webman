@@ -42,7 +42,7 @@ export const useUserStore = defineStore('user', {
       const res = await getInfo()
       const user = res.user
       let avatar = user.avatar || ''
-      if (!isHttp(avatar)) {
+      if (!isHttp(avatar) && !avatar.startsWith('https://') && !avatar.startsWith('http://')) {
         avatar = isEmpty(avatar) ? defaultAvatar : baseUrl + avatar
       }
       const userid = isEmpty(user) || isEmpty(user.userId) ? '' : user.userId
