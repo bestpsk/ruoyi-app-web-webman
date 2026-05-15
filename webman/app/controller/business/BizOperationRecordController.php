@@ -21,8 +21,12 @@ class BizOperationRecordController
     {
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
-        $data['operator_user_id'] = $request->loginUser->user->user_id ?? 0;
-        $data['operator_user_name'] = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+        if (empty($data['operator_user_id'])) {
+            $data['operator_user_id'] = $request->loginUser->user->user_id ?? 0;
+        }
+        if (empty($data['operator_user_name'])) {
+            $data['operator_user_name'] = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+        }
         $service = new BizOperationRecordService();
         $result = $service->insertRecord($data);
         return AjaxResult::toAjax($result ? 1 : 0);

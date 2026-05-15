@@ -33,6 +33,7 @@
     { "path": "pages/business/sales/index", "style": { "navigationBarTitleText": "销售开单", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/sales/order", "style": { "navigationBarTitleText": "客户开单", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/sales/operation", "style": { "navigationBarTitleText": "添加操作", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/sales/archive", "style": { "navigationBarTitleText": "客户档案", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/operation/index", "style": { "navigationBarTitleText": "项目操作", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/order/index", "style": { "navigationBarTitleText": "订单管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/order/detail", "style": { "navigationBarTitleText": "订单详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } }

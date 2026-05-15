@@ -12,7 +12,8 @@ class BizEmployeeConfigService
         $query = BizEmployeeConfig::query()
             ->leftJoin('sys_user_post as up', 'biz_employee_config.user_id', '=', 'up.user_id')
             ->leftJoin('sys_post as p', 'up.post_id', '=', 'p.post_id')
-            ->select('biz_employee_config.*', 'p.post_id', 'p.post_name');
+            ->leftJoin('sys_user as su', 'biz_employee_config.user_id', '=', 'su.user_id')
+            ->select('biz_employee_config.*', 'p.post_id', 'p.post_name', 'su.real_name', 'su.phonenumber');
 
         if (!empty($params['user_name'])) {
             $query->where('biz_employee_config.user_name', 'like', '%' . $params['user_name'] . '%');

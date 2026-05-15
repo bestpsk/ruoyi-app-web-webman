@@ -71,8 +71,8 @@
             </view>
 
             <view class="rc-meta-row">
-              <view class="rc-operator"><u-icon name="account" size="14" color="#86909C"></u-icon><text>{{ item.operator_user_name || item.operatorName || '-' }}</text></view>
-              <view class="rc-satisfaction" v-if="item.satisfaction != null && item.satisfaction !== ''"><u-rate :value="Number(item.satisfaction) || 0" :count="5" activeColor="#FF9900" inactiveColor="#E5E6EB" size="20" activeIcon="star-fill" inactiveIcon="star" :readonly="true"></u-rate></view>
+              <view class="rc-operator"><u-icon name="account" size="14" color="#86909C"></u-icon><text>{{ item.operatorUserName || item.operator_user_name || item.operatorName || '-' }}</text></view>
+              <view class="rc-satisfaction" v-if="item.satisfaction != null && item.satisfaction !== ''"><u-rate :modelValue="Number(item.satisfaction) || 0" :count="5" activeColor="#FF9900" inactiveColor="#E5E6EB" size="20" activeIcon="star-fill" inactiveIcon="star" :readonly="true"></u-rate></view>
               <text class="rc-date">{{ formatTimeShort(item.operationDate || item.createTime) }}</text>
             </view>
 
@@ -338,7 +338,7 @@ async function loadOperators() {
     const data = res.data || res
     const list = data.rows || []
     operatorList.value = list.map(item => ({
-      name: item.nickName || item.userName || item.realName || '-',
+      name: item.realName || item.nickName || item.userName || '-',
       userId: item.userId,
       subname: item.phonenumber || ''
     }))
@@ -376,7 +376,7 @@ async function submitOperation() {
         unitPrice: item.unitPrice,
         operationDate: form.operationDate,
         operatorUserId: form.operatorUserId,
-        operatorName: form.operatorName,
+        operatorUserName: form.operatorName,
         satisfaction: form.satisfaction,
         customerFeedback: form.customerFeedback,
         beforePhoto: form.beforePhoto.join(','),

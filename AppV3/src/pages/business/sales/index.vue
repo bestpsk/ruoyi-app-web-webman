@@ -85,6 +85,7 @@
           <view class="card-actions">
             <view class="action-btn order" @click.stop="goCreateOrder(item)"><u-icon name="edit-pen" size="14"></u-icon><text>开单</text></view>
             <view class="action-btn op" @click.stop="goCreateOperation(item)"><u-icon name="grid" size="14"></u-icon><text>操作</text></view>
+            <view class="action-btn archive" @click.stop="goArchive(item)"><u-icon name="folder" size="14"></u-icon><text>档案</text></view>
           </view>
         </view>
       </view>
@@ -200,6 +201,10 @@ function goCreateOperation(item) {
   uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${item.customerId}&customerName=${encodeURIComponent(item.customerName)}&storeId=${currentStoreId.value}&storeName=${encodeURIComponent(currentStoreName.value)}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${encodeURIComponent(currentEnterpriseName.value)}` })
 }
 
+function goArchive(item) {
+  uni.navigateTo({ url: `/pages/business/sales/archive?customerId=${item.customerId}&customerName=${encodeURIComponent(item.customerName)}&storeId=${currentStoreId.value}&storeName=${encodeURIComponent(currentStoreName.value)}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${encodeURIComponent(currentEnterpriseName.value)}` })
+}
+
 function goAddCustomer() {
   uni.showModal({
     title: '新增客户', editable: true, placeholderText: '请输入客户姓名',
@@ -267,6 +272,7 @@ page { background-color: #F5F7FA; }
 .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8rpx; padding: 16rpx; border-radius: 12rpx; font-size: 28rpx; font-weight: 500;
   &.order { color: #3D6DF7; background: #E8F0FE; }
   &.op { color: #FF6B35; background: #FFF3ED; }
+  &.archive { color: #722ED1; background: #F5E8FF; }
 }
 
 .empty-store { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 200rpx; }

@@ -514,7 +514,15 @@
                   </template>
                 </el-table-column>
                 <el-table-column label="满意度" width="120" align="center">
-                  <template #default="scope"><el-rate :model-value="scope.row.satisfaction" disabled size="small" v-if="scope.row.satisfaction" /></template>
+                  <template #default="scope">
+                    <el-rate 
+                      :model-value="Number(scope.row.satisfaction || 0)" 
+                      disabled 
+                      size="small" 
+                      v-if="scope.row.satisfaction !== null && scope.row.satisfaction !== undefined && scope.row.satisfaction !== ''"
+                    />
+                    <span v-else>-</span>
+                  </template>
                 </el-table-column>
                 <el-table-column label="操作日期" prop="operationDate" width="110" />
               </el-table>
@@ -1075,13 +1083,48 @@ function loadOperationRecords() {
   if (operationRecordSatisfaction.value) {
     params.satisfaction = operationRecordSatisfaction.value
   }
-  listOperation(params).then(res => { operationRecordList.value = res.rows || [] })
+  listOperation(params).then(res => {
+    console.log('[操作记录] API返回数据:', res)
+    console.log('[操作记录] rows字段:', res.rows)
+    if (res.rows && res.rows.length > 0) {
+      console.log('[操作记录] 第一条数据示例:', res.rows[0])
+      console.log('[操作记录] satisfaction类型:', typeof res.rows[0].satisfaction, '值:', res.rows[0].satisfaction)
+      console.log('[操作记录] operatorUserId:', res.rows[0].operatorUserId)
+      console.log('[操作记录] operatorUserName:', res.rows[0].operatorUserName)
+    }
+    operationRecordList.value = res.rows || []
+  })
 }
 
 function getOperatorRealName(row) {
-  if (!row.operatorUserId) return row.operatorUserName || '-'
-  const user = userOptions.value.find(u => u.userId === row.operatorUserId)
-  return user?.real_name || user?.nickName || row.operatorUserName || '-'
+  console.log('[操作人] row数据:', row)
+  
+  // 尝试多种可能的字段名（兼容不同命名规范）
+  const userId = row.operatorUserId || row.operator_id || row.userId || row.user_id
+  const userName = row.operatorUserName || row.operator_name || row.userName || row.user_name || row.createBy
+  
+  console.log('[操作人] 解析结果 - userId:', userId, 'userName:', userName)
+  console.log('[操作人] userOptions长度:', userOptions.value.length)
+  
+  // 优先使用后端直接返回的操作人姓名（如果存在且有效）
+  if (userName && userName !== '-' && userName !== 'null' && userName !== 'undefined') {
+    console.log('[操作人] 使用后端返回的姓名:', userName)
+    return userName
+  }
+  
+  // 如果有用户ID，尝试从 userOptions 中查找
+  if (userId) {
+    const user = userOptions.value.find(u => u.userId === userId || u.id === userId)
+    console.log('[操作人] 查找到的用户:', user)
+    if (user) {
+      const name = user.real_name || user.nickName || user.userName || user.nick_name
+      console.log('[操作人] 从userOptions获取的姓名:', name)
+      return name || '-'
+    }
+  }
+  
+  // 如果都找不到，返回 userName 或 '-'
+  return userName || '-'
 }
 
 function loadOwedPackages() {
