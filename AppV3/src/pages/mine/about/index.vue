@@ -35,9 +35,15 @@
 </template>
 
 <script setup>
+/**
+ * @description 关于我们页 - 应用信息展示
+ * @description 展示应用Logo、名称、版本号、官方邮箱和公司网站
+ */
 import { ref } from 'vue'
 
+/** 公司网站地址，从全局配置获取 */
 const url = ref(getApp().globalData.config.appInfo.site_url)
+/** 应用版本号，从全局配置获取 */
 const version = ref(getApp().globalData.config.appInfo.version)
 </script>
 

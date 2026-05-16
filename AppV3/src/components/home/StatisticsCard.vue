@@ -24,9 +24,15 @@
 </template>
 
 <script setup>
+/**
+ * @description 首页统计卡片组件 - 业务数据概览
+ * @description 展示咨询客数、成交客数、成交金额、成交项次的今日/月度数据，
+ * 支持通过props传入自定义数据，未传入时使用默认统计
+ */
 import { ref } from 'vue'
 
 const props = defineProps({
+  /** 统计数据数组，每项包含label/todayValue/monthValue */
   data: {
     type: Array,
     default: () => []
@@ -38,10 +44,11 @@ const defaultStats = [
   { label: '成交客数', todayValue: '36', monthValue: '386' },
   { label: '成交金额', todayValue: '¥12.8k', monthValue: '¥128.5k' },
   { label: '成交项次', todayValue: '89', monthValue: '892' }
-]
+])
 
 const statsList = ref(props.data.length > 0 ? props.data : defaultStats)
 
+/** 刷新统计数据（预留） */
 function handleRefresh() {
   uni.showToast({ title: '数据已刷新', icon: 'none' })
 }

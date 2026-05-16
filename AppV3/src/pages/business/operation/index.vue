@@ -46,6 +46,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 操作记录列表页 - 项目操作记录查看
+ * @description 展示操作记录列表，支持关键词搜索（客户名/操作类型）、分页加载、下拉刷新
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { listOperation } from '@/api/business/operationRecord'
 
@@ -61,6 +65,7 @@ const queryParams = reactive({ pageNum: 1, pageSize: 20, keyword: '' })
 
 function formatTime(time) { if (!time) return ''; return time.substring(0, 16) }
 
+/** 加载操作记录列表，支持分页和关键词搜索（搜索时同时匹配客户名和操作类型） */
 async function getList(isRefresh = false) {
   if (loading.value) return
   loading.value = true

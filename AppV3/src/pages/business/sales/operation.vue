@@ -223,6 +223,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 项目操作页 - 持卡操作与操作记录
+ * @description 从客户套餐中选择品项进行持卡操作，支持数量调整、满意度评价、
+ * 操作前后照片上传、操作记录查看等功能
+ */
 import { ref, reactive } from 'vue'
 import { getPackageByCustomer } from '@/api/business/customerPackage'
 import { listOperation, addOperation } from '@/api/business/operationRecord'
@@ -239,11 +244,13 @@ const storeName = ref('')
 const enterpriseId = ref('')
 const enterpriseName = ref('')
 
+/** 当前Tab索引：0-操作/1-操作记录 */
 const currentTab = ref(0)
 const tabList = ref([{ name: '操作' }, { name: '操作记录' }])
 const operationList = ref([])
 
 const packageList = ref([])
+/** 已选中的操作品项列表 */
 const selectedItems = ref([])
 
 const showDetailDrawer = ref(false)
@@ -252,8 +259,10 @@ const showDatePicker = ref(false)
 const datePickerValue = ref(Number(new Date()))
 const showOperatorPicker = ref(false)
 const operatorList = ref([])
+/** 抽屉内滚动区域高度 */
 const drawerScrollHeight = ref(600)
 
+/** 操作表单数据 */
 const form = reactive({
   operationType: '0',
   operationDate: '',
@@ -266,10 +275,12 @@ const form = reactive({
   remark: ''
 })
 
+/** 判断品项是否已被选中 */
 function isSelected(packageItemId) {
   return selectedItems.value.some(i => i.packageItemId === packageItemId)
 }
 
+/** 切换品项选中状态，选中时初始化数量为1并计算消耗金额，取消时移除 */
 function toggleItem(pkg, item, checked) {
   if (checked) {
     if (!isSelected(item.packageItemId)) {
@@ -290,10 +301,12 @@ function toggleItem(pkg, item, checked) {
   }
 }
 
+/** 从已选列表中移除指定品项 */
 function removeItem(idx) {
   selectedItems.value.splice(idx, 1)
 }
 
+/** 调整已选品项数量，限制在1到剩余次数之间，同步更新消耗金额 */
 function qtyChange(idx, delta) {
   const it = selectedItems.value[idx]
   if (!it) return
@@ -306,10 +319,12 @@ function qtyChange(idx, delta) {
   it.consumeAmount = Number((it.unitPrice || 0) * qty).toFixed(2)
 }
 
+/** 计算已选品项总价 */
 function getTotalPrice() {
   return selectedItems.value.reduce((sum, it) => sum + parseFloat(it.consumeAmount || 0), 0).toFixed(2)
 }
 
+/** 打开操作详情抽屉，初始化表单默认值并计算抽屉高度 */
 function openDetailDrawer() {
   if (selectedItems.value.length === 0) return
   form.operationDate = new Date().toISOString().slice(0, 10)
@@ -329,10 +344,12 @@ function openDetailDrawer() {
   showDetailDrawer.value = true
 }
 
+/** 关闭操作详情抽屉 */
 function closeDetailDrawer() {
   showDetailDrawer.value = false
 }
 
+/** 加载员工列表作为操作人选项 */
 async function loadOperators() {
   try {
     const res = await listEmployeeConfig({ pageNum: 1, pageSize: 100 })
@@ -348,16 +365,19 @@ async function loadOperators() {
   }
 }
 
+/** 选择操作人后更新表单 */
 function onOperatorSelect(e) {
   form.operatorName = e.name
   form.operatorUserId = e.userId
   showOperatorPicker.value = false
 }
 
+/** 计算已选品项合计消耗金额 */
 function getTotalConsume() {
   return selectedItems.value.reduce((sum, it) => sum + parseFloat(it.consumeAmount || 0), 0).toFixed(2)
 }
 
+/** 提交持卡操作，逐个品项调用接口创建操作记录，成功后返回上一页 */
 async function submitOperation() {
   if (selectedItems.value.length === 0) {
     return uni.showToast({ title: '请选择操作品项', icon: 'none' })
@@ -399,6 +419,7 @@ async function submitOperation() {
   }
 }
 
+/** 操作前照片上传，上传到服务端后将返回的URL存入表单 */
 async function onBeforePhoto(e) {
   if (e.file) {
     try {
@@ -411,6 +432,7 @@ async function onBeforePhoto(e) {
   }
 }
 
+/** 操作后照片上传，上传到服务端后将返回的URL存入表单 */
 async function onAfterPhoto(e) {
   if (e.file) {
     try {
@@ -423,6 +445,7 @@ async function onAfterPhoto(e) {
   }
 }
 
+/** 日期选择确认，格式化为YYYY-MM-DD */
 function onDateConfirm(e) {
   const d = new Date(Number(e))
   const y = d.getFullYear()
@@ -432,11 +455,13 @@ function onDateConfirm(e) {
   showDatePicker.value = false
 }
 
+/** Tab切换处理，切换到操作记录时加载数据 */
 function onTabChange(e) {
   currentTab.value = e.index
   if (e.index === 1) loadOperations()
 }
 
+/** 加载客户操作记录列表 */
 async function loadOperations() {
   if (!customerId.value) return
   try {
@@ -448,13 +473,16 @@ async function loadOperations() {
   }
 }
 
+/** 操作状态码映射为中文名称 */
 function getOperationStatusName(status) {
   const map = { '0': '待操作', '1': '已成交', '2': '已完成' }
   return map[status] || '未知'
 }
 
+/** 格式化时间为MM-DD HH:mm简短格式 */
 function formatTimeShort(time) { if (!time) return ''; return time.substring(5, 16).replace('-', '-').replace(' ', ' ') }
 
+/** 加载客户已成交的套餐列表，仅展示状态为已成交的套餐 */
 async function loadPackages() {
   if (!customerId.value) return
   try {

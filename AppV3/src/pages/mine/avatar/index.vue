@@ -11,6 +11,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 修改头像页 - 用户头像更换
+ * @description 支持从相册或相机选择图片，上传至服务端并更新store中的头像地址
+ */
 import { ref } from 'vue'
 import { uploadAvatar } from '@/api/system/user'
 import { useUserStore } from '@/store/modules/user'
@@ -18,9 +22,12 @@ import config from '@/config'
 
 const userStore = useUserStore()
 const baseUrl = config.baseUrl
+/** 用户选中的本地图片路径 */
 const selectedImage = ref('')
+/** 当前展示的头像地址，初始为store中的头像 */
 const avatarSrc = ref(userStore.avatar)
 
+/** 从相册或相机选择一张图片作为新头像 */
 function chooseImage() {
   uni.chooseImage({
     count: 1,
@@ -33,12 +40,13 @@ function chooseImage() {
   })
 }
 
+/** 上传选中的头像图片到服务端，成功后更新store头像地址并返回上一页 */
 async function uploadImage() {
   if (!selectedImage.value) {
     uni.showToast({ title: '请先选择头像', icon: 'none' })
     return
   }
-  uni.showLoading({ title: '上传�?..' })
+  uni.showLoading({ title: '上传中...' })
   try {
     const data = { name: 'avatarfile', filePath: selectedImage.value }
     const response = await uploadAvatar(data)

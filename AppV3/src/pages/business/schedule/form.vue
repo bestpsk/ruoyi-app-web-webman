@@ -112,6 +112,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 行程表单页 - 新增/编辑/查看行程
+ * @description 支持三种模式（add/edit/view），包含员工选择器、企业选择器、
+ * 日历多选日期、字典加载、日期冲突检测、批量新增多天行程等功能
+ */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule, getScheduleDates } from '@/api/business/schedule'
 import { listEnterprise } from '@/api/business/enterprise'
@@ -157,6 +162,7 @@ const form = reactive({
   remark: ''
 })
 
+/** 选中日期的展示文本：1天显示"X月X日"，2-3天用顿号连接，超过3天显示"X月X日 等 N天" */
 const dateRangeText = computed(() => {
   if (!form.selectedDates || form.selectedDates.length === 0) {
     return ''
@@ -178,6 +184,7 @@ const dateRangeText = computed(() => {
   return `${formatMonthDay(form.selectedDates[0])} 等 ${form.selectedDates.length} 天`
 })
 
+/** 员工选择确认，更新表单并加载该员工已安排日期用于冲突检测 */
 function onUserConfirm(item) {
   form.userId = item.userId
   form.userName = item.nickName || item.userName
@@ -185,12 +192,14 @@ function onUserConfirm(item) {
   loadBookedDates()
 }
 
+/** 企业选择确认，更新表单中的企业ID和名称 */
 function onEnterpriseConfirm(item) {
   form.enterpriseId = item.enterpriseId
   form.enterpriseName = item.enterpriseName
   showEnterprisePicker.value = false
 }
 
+/** 打开日历选择器，查看模式下禁用，需先选择员工才能打开 */
 async function openCalendar() {
   if (mode.value === 'view') return
   if (!form.userId) {
@@ -201,6 +210,7 @@ async function openCalendar() {
   showCalendarPicker.value = true
 }
 
+/** 日历日期格式化，已安排的日期标记为"已安排"并禁用选择 */
 function calendarFormatter(day) {
   const dateStr = `${day.year}-${String(day.month).padStart(2, '0')}-${String(day.day).padStart(2, '0')}`
   if (bookedDates.value.includes(dateStr)) {
@@ -210,6 +220,7 @@ function calendarFormatter(day) {
   return day
 }
 
+/** 日历多选确认，将选中的日期排序后更新到表单，并设置起止日期 */
 function onMultiDateConfirm(e) {
   console.log('[Calendar] 多选结果:', e)
 
@@ -229,6 +240,7 @@ function onMultiDateConfirm(e) {
   showCalendarPicker.value = false
 }
 
+/** 加载行程目的和状态的字典数据 */
 async function loadDictData() {
   try {
     const [purposeRes, statusRes] = await Promise.all([
@@ -244,6 +256,7 @@ async function loadDictData() {
   } catch (e) { console.error('加载字典数据失败:', e) }
 }
 
+/** 加载指定员工当月已安排的日期列表，用于日历冲突检测 */
 async function loadBookedDates() {
   if (!form.userId) return
   try {
@@ -282,6 +295,7 @@ function filterEnterpriseList() {
   filteredEnterpriseList.value = enterpriseList.value.filter(e => (e.enterpriseName || '').toLowerCase().includes(keyword))
 }
 
+/** 加载行程详情数据并填充到表单，用于编辑和查看模式 */
 async function loadDetail() {
   if (!scheduleId.value) return
   try {
@@ -308,6 +322,11 @@ async function loadDetail() {
   finally { uni.hideLoading() }
 }
 
+/**
+ * 提交行程表单，校验员工/企业/日期/目的必填后，
+ * 检测选中日期是否与已安排日期冲突，
+ * 新增模式调用批量新增接口，编辑模式调用更新接口
+ */
 async function submitForm() {
   if (!form.userName) { uni.showToast({ title: '请选择员工', icon: 'none' }); return }
   if (!form.enterpriseId) { uni.showToast({ title: '请选择企业', icon: 'none' }); return }

@@ -98,6 +98,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 考勤记录页 - 月度考勤统计与日历视图
+ * @description 展示月度考勤统计（正常/迟到/早退/缺勤），日历视图标记每日考勤状态，
+ * 支持月份切换、日期筛选、查看每日打卡明细（含打卡时间和地址）
+ */
 import { ref, computed, onMounted } from 'vue'
 import { getRecordList, getMonthStats, getClockListByRecordId } from '@/api/attendance'
 import { useUserStore } from '@/store/modules/user'
@@ -112,8 +117,10 @@ const recordMap = ref({})
 const clockListMap = ref({})
 const selectedDate = ref(null)
 
+/** 当前月份展示文本，如"2026年5月" */
 const currentMonth = computed(() => `${currentYear.value}年${currentMonthNum.value}月`)
 
+/** 根据选中日期过滤考勤记录，未选日期时展示全部 */
 const filteredRecordList = computed(() => {
   if (!selectedDate.value) {
     return recordList.value
@@ -121,6 +128,10 @@ const filteredRecordList = computed(() => {
   return recordList.value.filter(item => item.attendanceDate === selectedDate.value)
 })
 
+/**
+ * 生成日历网格数据，包含月份第一天偏移的空白格、
+ * 每日的考勤状态颜色标记和今日高亮
+ */
 const calendarDays = computed(() => {
   const firstDay = new Date(currentYear.value, currentMonthNum.value - 1, 1).getDay()
   const daysInMonth = new Date(currentYear.value, currentMonthNum.value, 0).getDate()
@@ -148,11 +159,13 @@ const calendarDays = computed(() => {
   return days
 })
 
+/** 考勤状态编码映射为中文（0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤） */
 function getStatusText(status) {
   const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤' }
   return map[status] || '--'
 }
 
+/** 考勤状态映射为样式类名（normal/late/absent） */
 function getStatusColor(status) {
   const map = { '0': 'normal', '1': 'late', '2': 'late', '3': 'absent', '4': 'absent' }
   return map[status] || ''
@@ -185,6 +198,10 @@ function isNumericOnly(str) {
   return /^\d+$/.test(str.trim())
 }
 
+/**
+ * 格式化地址为简短展示文本，
+ * 优先提取括号内容或区县/路名等有意义片段，超过20字符截断
+ */
 function formatAddress(address) {
   if (!address) return ''
   if (isCoordinateOnly(address)) return ''
@@ -237,6 +254,7 @@ function formatAddress(address) {
   return addr.length >= 2 ? addr : (addr + '...')
 }
 
+/** 月份切换，delta为+1或-1，跨年自动调整 */
 function changeMonth(delta) {
   currentMonthNum.value += delta
   if (currentMonthNum.value > 12) {
@@ -249,6 +267,7 @@ function changeMonth(delta) {
   loadData()
 }
 
+/** 日历日期点击，切换选中/取消选中该日期进行筛选 */
 function selectDay(item) {
   if (!item.day) return
   if (selectedDate.value === item.date) {
@@ -258,6 +277,11 @@ function selectDay(item) {
   }
 }
 
+/**
+ * 加载月度考勤统计数据和记录列表，
+ * 同时为每条记录加载打卡明细（上下班时间、地址等），
+ * 构建日期→记录的映射供日历视图使用
+ */
 async function loadData() {
   const month = `${currentYear.value}-${String(currentMonthNum.value).padStart(2, '0')}`
   const startDate = `${month}-01`

@@ -66,6 +66,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 订单列表页 - 销售订单管理
+ * @description 展示订单列表，支持按订单编号/客户名搜索、按订单状态筛选
+ * （待审核/企业已审/财务已审/已完成/已取消），点击跳转订单详情
+ */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listSalesOrder } from '@/api/business/salesOrder'
 
@@ -90,6 +95,7 @@ const orderStatusOptions = ref([
   { label: '已取消', value: '4' }
 ])
 
+/** 订单状态编码映射为中文名称（0-待审核/1-企业已审/2-财务已审/3-已完成/4-已取消） */
 function getOrderStatusName(status) {
   const item = orderStatusOptions.value.find(s => s.value === String(status))
   return item ? item.label : '未知'
@@ -125,6 +131,7 @@ function resetFilter() { queryParams.status = '' }
 function confirmFilter() { showFilter.value = false; getList(true) }
 function clearFilter(field) { queryParams[field] = ''; getList(true) }
 
+/** 跳转订单详情页 */
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/business/order/detail?id=${item.orderId}` })
 }

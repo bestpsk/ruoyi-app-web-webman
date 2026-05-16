@@ -57,29 +57,39 @@
 </template>
 
 <script setup>
+/**
+ * @description 首页订单列表组件 - 最近订单展示
+ * @description 展示最近订单列表，每项显示客户名、门店、金额、来源类型和创建时间，
+ * 点击订单项根据来源类型跳转到订单/操作/还款详情页
+ */
 import { ref, computed } from 'vue'
 
 const props = defineProps({
+  /** 订单数据数组，每项包含id/name/store/amount/status/createTime/sourceType/sourceId */
   list: {
     type: Array,
     default: () => []
   }
 })
 
+/** 动态计算滚动区域高度，基于列表项数量，最大600rpx */
 const scrollHeight = computed(() => {
   return `${Math.min(props.list.length * 160 + 40, 600)}rpx`
 })
 
+/** 订单列表，优先使用props传入数据 */
 const orderList = computed(() => {
   if (props.list && props.list.length > 0) return props.list
   return []
 })
 
+/** 订单来源类型映射为标签颜色类型（开单-蓝/操作-绿/还款-橙/手动-灰） */
 function getStatusType(status) {
   const statusMap = { '开单': 'primary', '操作': 'success', '还款': 'warning', '手动': 'info' }
   return statusMap[status] || 'info'
 }
 
+/** 格式化时间为MM-DD HH:mm简短格式 */
 function formatTime(time) {
   if (!time) return ''
   const d = typeof time === 'string' ? new Date(time.replace(/-/g, '/')) : new Date(time)
@@ -90,6 +100,7 @@ function formatTime(time) {
   return `${month}-${day} ${hour}:${min}`
 }
 
+/** 点击订单项，根据来源类型（0-订单/1-操作/2-还款）跳转到对应详情页 */
 function handleOrderClick(item) {
   if (!item.sourceId) return
 
@@ -102,6 +113,7 @@ function handleOrderClick(item) {
   })
 }
 
+/** "查看全部"按钮，切换到工作台Tab页 */
 function handleMore() {
   uni.switchTab({ url: '/pages/work/index' })
 }

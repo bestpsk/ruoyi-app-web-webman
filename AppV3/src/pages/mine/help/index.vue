@@ -13,8 +13,13 @@
 </template>
 
 <script setup>
+/**
+ * @description 常见问题页 - 帮助中心
+ * @description 按分类展示常见问题列表，点击问题跳转详情页查看解答内容
+ */
 import { ref } from 'vue'
 
+/** 问题分类列表，包含标题和子问题（含解答内容） */
 const list = ref([
   {
     title: '馥辰国际问题',
@@ -34,6 +39,7 @@ const list = ref([
   }
 ])
 
+/** 点击问题项，跳转到文本详情页展示问题标题和解答内容 */
 function handleText(item) {
   uni.navigateTo({ url: `/pages/common/textview/index?title=${item.title}&content=${item.content}` })
 }

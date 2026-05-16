@@ -18,14 +18,20 @@
 </template>
 
 <script setup>
+/**
+ * @description 首页通知栏组件 - 滚动公告展示
+ * @description 滚动展示通知、公告、提醒等消息，点击右侧可查看更多消息
+ */
 import { ref } from 'vue'
 
+/** 默认通知列表数据 */
 const noticeList = ref([
   { type: '通知', content: '您有一条新的订单待处理，请及时查看' },
   { type: '公告', content: '系统将于今晚22:00进行维护升级，请提前保存数据' },
   { type: '提醒', content: '今日有3位顾客预约，请提前做好准备' }
 ])
 
+/** 查看更多通知（建设中） */
 function handleMoreNotice() {
   uni.showToast({ title: '查看更多消息', icon: 'none' })
 }

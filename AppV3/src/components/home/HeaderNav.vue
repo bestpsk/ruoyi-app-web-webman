@@ -34,6 +34,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 首页头部导航组件 - 用户信息与快捷操作
+ * @description 展示用户头像、昵称、问候语，提供个人信息、消息中心、设置三个快捷入口
+ */
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import QuickMenu from './QuickMenu.vue'
@@ -43,12 +47,14 @@ const userStore = useUserStore()
 const statusBarHeight = ref(44)
 const messageCount = ref(3)
 
+/** 用户信息：头像（默认占位图）、昵称（默认"用户"）、角色 */
 const userInfo = computed(() => ({
   avatar: userStore.getAvatar || '/static/images/profile.jpg',
   name: userStore.getNickName || userStore.getName || '用户',
   role: '美容顾问'
 }))
 
+/** 根据当前时间自动生成问候语（早上好/下午好/晚上好） */
 const greeting = computed(() => {
   const hour = new Date().getHours()
   if (hour < 12) return '早上好'
@@ -62,14 +68,17 @@ uni.getSystemInfoSync({
   }
 })
 
+/** 跳转个人信息页 */
 function handleUserInfo() {
   uni.navigateTo({ url: '/pages/mine/info/index' })
 }
 
+/** 消息中心（建设中） */
 function handleMessage() {
   uni.showToast({ title: '消息中心开发中', icon: 'none' })
 }
 
+/** 跳转应用设置页 */
 function handleSetting() {
   uni.navigateTo({ url: '/pages/mine/setting/index' })
 }

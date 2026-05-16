@@ -116,6 +116,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 行程列表页 - 行程安排管理
+ * @description 展示行程列表，支持月份选择、按目的/状态筛选、关键词搜索，
+ * 将同一员工同一企业同一目的的行程按日期分组展示，支持删除整组行程
+ */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listSchedule, delSchedule } from '@/api/business/schedule'
 
@@ -157,21 +162,29 @@ const statusOptions = ref([
   { label: '已取消', value: '4' }
 ])
 
+/** 行程目的编码映射为中文名称（1-爆卡/2-启动销售/3-售后服务/4-洽谈业务） */
 function getPurposeName(value) {
   const item = purposeOptions.value.find(p => p.value === String(value))
   return item ? item.label : '-'
 }
 
+/** 行程状态编码映射为中文名称（1-已预约/2-服务中/3-已完成/4-已取消） */
 function getStatusName(value) {
   const item = statusOptions.value.find(s => s.value === String(value))
   return item ? item.label : '-'
 }
 
+/** 格式化日期为MM-DD简短格式 */
 function formatDay(dateStr) {
   if (!dateStr) return ''
   return dateStr.substring(5)
 }
 
+/**
+ * 将行程列表按员工+企业+目的+状态+备注进行分组，
+ * 同组内的日期合并为scheduleDates数组并按时间排序，
+ * 用于在列表中以组为单位展示多天行程
+ */
 function groupScheduleList(list) {
   const groupMap = new Map()
 
@@ -211,10 +224,12 @@ function groupScheduleList(list) {
   return result
 }
 
+/** 取日期数组前6个用于展示，超出部分省略 */
 function getDisplayDates(dates) {
   return dates.slice(0, 6)
 }
 
+/** 月份选择确认，格式化为YYYY-MM并重新加载列表 */
 function onMonthConfirm(e) {
   const date = new Date(e.value)
   queryParams.yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
@@ -222,6 +237,7 @@ function onMonthConfirm(e) {
   getList(true)
 }
 
+/** 加载行程列表，根据年月计算起止日期，搜索时同时匹配员工名和企业名，加载后自动分组 */
 async function getList(isRefresh = false) {
   if (loading.value) return
   loading.value = true
@@ -287,6 +303,7 @@ function goAdd() {
   uni.navigateTo({ url: '/pages/business/schedule/form?mode=add' })
 }
 
+/** 删除行程组，弹出确认框后批量删除该组所有行程ID，成功后刷新列表 */
 function handleDelete(item) {
   uni.showModal({
     title: '提示', content: `是否确认删除该行程（共${item.scheduleIds.length}天）?`,

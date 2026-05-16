@@ -129,12 +129,18 @@
 </template>
 
 <script setup>
+/**
+ * @description 企业表单页 - 新增/编辑/查看企业
+ * @description 支持三种模式（add/edit/view），包含企业名称、老板、手机号（格式校验）、
+ * 企业类型/级别选择、年业绩等字段，提交时区分新增和修改
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { getEnterprise, addEnterprise, updateEnterprise, delEnterprise } from '@/api/business/enterprise'
 
 const submitting = ref(false)
 const showTypePicker = ref(false)
 const showLevelPicker = ref(false)
+/** 页面模式：add/edit/view */
 const mode = ref('add')
 const enterpriseId = ref(null)
 
@@ -168,6 +174,7 @@ const levelColumns = ref([
   { label: 'D级', value: '4' }
 ])
 
+/** 企业类型选择确认，更新表单中的类型编码和名称 */
 function onTypeConfirm(e) {
   const item = e.value[0]
   form.enterpriseType = item.value
@@ -175,6 +182,7 @@ function onTypeConfirm(e) {
   showTypePicker.value = false
 }
 
+/** 企业级别选择确认，更新表单中的级别编码和名称 */
 function onLevelConfirm(e) {
   const item = e.value[0]
   form.enterpriseLevel = item.value
@@ -182,6 +190,7 @@ function onLevelConfirm(e) {
   showLevelPicker.value = false
 }
 
+/** 加载企业详情数据并填充到表单，用于编辑和查看模式 */
 async function loadDetail() {
   if (!enterpriseId.value) return
   try {
@@ -224,6 +233,7 @@ function getLevelName(value) {
   return item ? item.label : ''
 }
 
+/** 提交企业表单，校验必填项和手机号格式后，根据是否有ID区分新增和修改 */
 async function submitForm() {
   if (!form.enterpriseName) { uni.showToast({ title: '请输入企业名称', icon: 'none' }); return }
   if (!form.bossName) { uni.showToast({ title: '请输入老板姓名', icon: 'none' }); return }
@@ -265,6 +275,7 @@ async function submitForm() {
   } finally { submitting.value = false }
 }
 
+/** 删除企业，弹出确认框后调用删除接口，成功后返回列表页 */
 function handleDelete() {
   if (!enterpriseId.value) return
   uni.showModal({

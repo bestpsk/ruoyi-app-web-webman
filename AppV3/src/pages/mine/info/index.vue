@@ -12,6 +12,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 个人信息查看页 - 用户资料展示
+ * @description 展示用户昵称、手机号、邮箱、岗位、角色和创建日期等基本信息
+ */
 import { ref, onMounted } from 'vue'
 import { getUserProfile } from '@/api/system/user'
 
@@ -23,6 +27,7 @@ onMounted(() => {
   getUser()
 })
 
+/** 获取用户个人资料，包括基本信息、角色组和岗位组 */
 function getUser() {
   getUserProfile().then(response => {
     user.value = response.data

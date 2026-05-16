@@ -38,6 +38,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 登录页 - 用户身份认证入口
+ * @description 支持账号密码+验证码登录，登录成功后获取用户信息并跳转首页。
+ * 包含验证码获取、表单校验、隐私协议确认等交互流程
+ */
 import { ref, onMounted } from 'vue'
 import { getCodeImg } from '@/api/login'
 import { getToken } from '@/utils/auth'
@@ -65,20 +70,24 @@ if (getToken()) {
 }
 // #endif
 
+/** 跳转注册页 */
 function handleUserRegister() {
   uni.redirectTo({ url: '/pages/register' })
 }
 
+/** 跳转隐私政策页面 */
 function handlePrivacy() {
   let site = globalConfig.value.appInfo.agreements[0]
   uni.navigateTo({ url: `/pages/common/webview/index?title=${site.title}&url=${site.url}` })
 }
 
+/** 跳转用户协议页面 */
 function handleUserAgrement() {
   let site = globalConfig.value.appInfo.agreements[1]
   uni.navigateTo({ url: `/pages/common/webview/index?title=${site.title}&url=${site.url}` })
 }
 
+/** 获取图形验证码，将base64图片绑定到页面并保存uuid用于登录校验 */
 function getCode() {
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
@@ -91,6 +100,7 @@ function getCode() {
   })
 }
 
+/** 登录表单校验，检查账号、密码和验证码是否填写完整 */
 async function handleLogin() {
   if (loginForm.value.username === '') {
     uni.showToast({ title: '请输入账号', icon: 'none' })
@@ -104,6 +114,7 @@ async function handleLogin() {
   }
 }
 
+/** 调用store登录接口，成功后获取用户信息并跳转首页，失败则刷新验证码 */
 async function pwdLogin() {
   try {
     await userStore.loginAction(loginForm.value)

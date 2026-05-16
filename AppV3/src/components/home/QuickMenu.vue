@@ -24,6 +24,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 首页快捷菜单组件 - 常用功能入口
+ * @description 展示打卡、开单、行程、订单四个快捷入口，
+ * 已配置路径的跳转对应页面，未配置的显示开发中提示
+ */
 import { ref } from 'vue'
 
 const menuList = ref([
@@ -33,6 +38,7 @@ const menuList = ref([
   { icon: 'list', title: '订单', path: '/pages/work/index' }
 ])
 
+/** 菜单项点击处理，已配置路径的跳转对应页面，未配置的显示开发中提示 */
 function handleMenuClick(item) {
   if (item.path) {
     uni.navigateTo({ url: item.path })
@@ -44,6 +50,7 @@ function handleMenuClick(item) {
   }
 }
 
+/** "更多"按钮，切换到工作台Tab页 */
 function handleMoreMenu() {
   uni.switchTab({ url: '/pages/work/index' })
 }

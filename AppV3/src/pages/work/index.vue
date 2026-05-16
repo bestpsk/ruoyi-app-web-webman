@@ -94,6 +94,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 工作台页 - 业务功能入口
+ * @description 展示轮播图、搜索框、常用功能和业务管理模块，支持按关键词搜索功能
+ */
 import { ref, computed } from 'vue'
 
 const searchKeyword = ref('')
@@ -124,22 +128,26 @@ const gridList = ref([
   { icon: 'chat', title: '通知公告', path: '' }
 ])
 
+/** 根据搜索关键词过滤业务管理模块列表 */
 const filteredBusinessList = computed(() => {
   if (!searchKeyword.value.trim()) return businessList.value
   const keyword = searchKeyword.value.trim().toLowerCase()
   return businessList.value.filter(item => item.title.toLowerCase().includes(keyword))
 })
 
+/** 根据搜索关键词过滤系统管理模块列表 */
 const filteredGridList = computed(() => {
   if (!searchKeyword.value.trim()) return gridList.value
   const keyword = searchKeyword.value.trim().toLowerCase()
   return gridList.value.filter(item => item.title.toLowerCase().includes(keyword))
 })
 
+/** Banner图点击处理（预留扩展） */
 function clickBannerItem(item) {
   console.info('Banner clicked:', item)
 }
 
+/** 功能模块点击处理，已配置路径的跳转对应页面，未配置的显示建设中提示 */
 function handleGridClick(item) {
   if (item.path) {
     uni.navigateTo({ url: item.path })
@@ -148,6 +156,7 @@ function handleGridClick(item) {
   }
 }
 
+/** 通用页面跳转 */
 function goToPage(url) {
   uni.navigateTo({ url })
 }

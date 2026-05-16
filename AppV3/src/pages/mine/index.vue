@@ -63,34 +63,48 @@
 </template>
 
 <script setup>
+/**
+ * @description 个人中心页 - 用户信息总览
+ * @description 展示用户头像、名称，提供个人信息查看/编辑、设置、帮助等功能入口
+ */
 import { computed } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 
 const userStore = useUserStore()
+/** 从store获取用户名称 */
 const name = computed(() => userStore.name)
+/** 从store获取用户头像地址 */
 const avatar = computed(() => userStore.avatar)
 
+/** 跳转个人信息查看页 */
 function handleToInfo() {
   uni.navigateTo({ url: '/pages/mine/info/index' })
 }
+/** 跳转个人信息编辑页 */
 function handleToEditInfo() {
   uni.navigateTo({ url: '/pages/mine/info/edit' })
 }
+/** 跳转应用设置页 */
 function handleToSetting() {
   uni.navigateTo({ url: '/pages/mine/setting/index' })
 }
+/** 未登录时跳转登录页 */
 function handleToLogin() {
   uni.reLaunch({ url: '/pages/login' })
 }
+/** 跳转修改头像页 */
 function handleToAvatar() {
   uni.navigateTo({ url: '/pages/mine/avatar/index' })
 }
+/** 跳转常见问题页 */
 function handleHelp() {
   uni.navigateTo({ url: '/pages/mine/help/index' })
 }
+/** 跳转关于我们页 */
 function handleAbout() {
   uni.navigateTo({ url: '/pages/mine/about/index' })
 }
+/** 建设中模块提示 */
 function handleBuilding() {
   uni.showToast({ title: '模块建设中~', icon: 'none' })
 }

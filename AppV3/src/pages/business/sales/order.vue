@@ -268,6 +268,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 销售订单页 - 开单/开单记录/还款
+ * @description 支持为客户创建销售订单（含品项、金额计算）、查看历史订单、
+ * 欠款套餐还款（支持多种支付方式），自动计算单次价和欠款金额
+ */
 import { ref, computed, onMounted } from 'vue'
 import { getCustomer } from '@/api/business/customer'
 import { addSalesOrder, listSalesOrder } from '@/api/business/salesOrder'
@@ -275,6 +280,7 @@ import { addSalesOrder, listSalesOrder } from '@/api/business/salesOrder'
 import { getOwedPackages, addRepayment } from '@/api/business/repayment'
 
 const currentTab = ref(0)
+/** Tab列表，有欠款时动态添加"还欠款"标签 */
 const tabList = computed(() => {
   const tabs = [{ name: '开单' }, { name: '开单记录' }]
   if (owedPackageList.value.length > 0) tabs.push({ name: '还欠款' })
@@ -297,10 +303,14 @@ const orderItems = ref([
 const orderRemark = ref('')
 const orderStoreDealer = ref('')
 
+/** 所有品项成交金额合计 */
 const totalDealAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (parseFloat(item.dealAmount) || 0), 0))
+/** 所有品项实付金额合计 */
 const totalPaidAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (parseFloat(item.paidAmount) || 0), 0))
+/** 所有品项欠款金额合计（成交-实付） */
 const totalOwedAmount = computed(() => totalDealAmount.value - totalPaidAmount.value)
 
+/** 计算品项单次价：成交金额÷次数 */
 function calcUnitPrice(item) {
   const qty = parseInt(item.quantity) || 0
   const deal = parseFloat(item.dealAmount) || 0
@@ -308,24 +318,28 @@ function calcUnitPrice(item) {
   return (deal / qty).toFixed(2)
 }
 
+/** 计算品项欠款金额：成交金额-实付金额，最小为0 */
 function calcOwedAmount(item) {
   const deal = parseFloat(item.dealAmount) || 0
   const paid = parseFloat(item.paidAmount) || 0
   return Math.max(0, deal - paid).toFixed(2)
 }
 
+/** 触发品项金额响应式更新（computed自动重算） */
 function calcItemAuto(index) {
-  // 触发响应式更新，computed 会自动重新计算
 }
 
+/** 添加一个空白品项行 */
 function addOrderItemRow() {
   orderItems.value.push({ productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 })
 }
 
+/** 删除指定品项行 */
 function removeOrderItem(index) {
   orderItems.value.splice(index, 1)
 }
 
+/** 支付方式选项 */
 const paymentMethods = ref([
   { label: '现金', value: 'cash' },
   { label: '微信', value: 'wechat' },
@@ -340,12 +354,14 @@ const repayAmount = ref('')
 const repayRemark = ref('')
 const repaySubmitting = ref(false)
 
+/** Tab切换处理，切换到记录或还款时加载对应数据 */
 function onTabChange(e) {
   currentTab.value = e.index
   if (e.index === 1) loadOrders()
   if (e.index === 2) loadOwedPackages()
 }
 
+/** 加载客户信息，成功后自动加载欠款列表 */
 async function loadCustomer() {
   if (!customerId.value) return
   try {
@@ -355,6 +371,7 @@ async function loadCustomer() {
   } catch (e) { console.error('加载客户失败:', e) }
 }
 
+/** 加载客户历史订单列表 */
 async function loadOrders() {
   if (!customerId.value) return
   try {
@@ -373,6 +390,7 @@ async function loadOrders() {
 //   } catch (e) { console.error('加载操作记录失败:', e) }
 // }
 
+/** 加载客户欠款套餐列表，无欠款时自动切回开单Tab */
 async function loadOwedPackages() {
   if (!customerId.value) return
   try {
@@ -385,6 +403,7 @@ async function loadOwedPackages() {
   } catch (e) { console.error('加载欠款列表失败:', e) }
 }
 
+/** 打开还款弹窗，初始化还款表单 */
 function openRepayPopup(pkg) {
   selectedPackage.value = pkg
   repayAmount.value = ''
@@ -393,11 +412,13 @@ function openRepayPopup(pkg) {
   showRepayPopup.value = true
 }
 
+/** 关闭还款弹窗并清空选中套餐 */
 function closeRepayPopup() {
   showRepayPopup.value = false
   selectedPackage.value = null
 }
 
+/** 提交还款，校验金额有效性后调用接口，成功后刷新欠款列表 */
 async function submitRepay() {
   if (!selectedPackage.value) return
   const amount = parseFloat(repayAmount.value)
@@ -441,6 +462,7 @@ async function submitRepay() {
   }
 }
 
+/** 提交销售订单，校验套餐名称和品项后调用接口，成功后提示欠款金额并重置表单 */
 async function submitOrder() {
   if (!orderPackageName.value) {
     uni.showToast({ title: '请输入套餐名称', icon: 'none' })
@@ -499,13 +521,17 @@ async function submitOrder() {
   }
 }
 
+/** 订单状态码映射为中文名称 */
 function getOrderStatusName(status) {
   const map = { '0': '未成交', '1': '已成交', '2': '已用完', '3': '还款', '4': '已取消' }
   return map[status] || '未知'
 }
 
+/** 格式化时间为YYYY-MM-DD HH:mm */
 function formatTime(time) { if (!time) return ''; return time.substring(0, 16) }
+/** 格式化为MM-DD HH:mm简短格式 */
 function formatTimeShort(time) { if (!time) return ''; return time.substring(5, 16).replace('-', '-').replace(' ', ' ') }
+/** 拨打客户电话 */
 function callPhone(phone) { if (!phone) return; uni.makePhoneCall({ phoneNumber: phone }) }
 
 onMounted(() => {

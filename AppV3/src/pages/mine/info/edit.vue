@@ -21,11 +21,16 @@
 </template>
 
 <script setup>
+/**
+ * @description 个人信息编辑页 - 用户资料修改
+ * @description 支持修改用户昵称、手机号、邮箱和性别，提交后更新到服务端
+ */
 import { ref, onMounted } from 'vue'
 import { getUserProfile, updateUserProfile } from '@/api/system/user'
 
 const formRef = ref(null)
 const user = ref({ nickName: '', phonenumber: '', email: '', sex: '' })
+/** 性别选项列表 */
 const sexs = ref([
   { text: '男', value: '0' },
   { text: '女', value: '1' }
@@ -35,12 +40,14 @@ onMounted(() => {
   getUser()
 })
 
+/** 获取用户当前资料并填充到表单 */
 function getUser() {
   getUserProfile().then(response => {
     user.value = response.data
   })
 }
 
+/** 提交修改后的用户资料到服务端，成功后提示 */
 function submit() {
   updateUserProfile(user.value).then(() => {
     uni.showToast({ title: '修改成功', icon: 'success' })

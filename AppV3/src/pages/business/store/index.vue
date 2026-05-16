@@ -147,6 +147,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 门店列表页 - 门店管理入口
+ * @description 展示门店列表，支持关键词搜索（门店名/负责人/电话）、按所属企业/状态筛选、
+ * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除门店
+ */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
@@ -176,6 +181,7 @@ const queryParams = reactive({
   status: ''
 })
 
+/** 根据企业ID查找企业名称 */
 function getEnterpriseName(id) {
   const item = enterpriseOptions.value.find(e => e.enterpriseId === id)
   return item ? item.enterpriseName : ''
@@ -196,6 +202,7 @@ async function loadEnterpriseOptions() {
   }
 }
 
+/** 加载门店列表，支持分页和关键词搜索（搜索时同时匹配门店名/负责人/电话），isRefresh为true时重置到第一页 */
 async function getList(isRefresh = false) {
   if (loading.value) return
   loading.value = true
@@ -248,14 +255,17 @@ function confirmFilter() { showFilter.value = false; getList(true) }
 
 function clearFilter(field) { queryParams[field] = ''; getList(true) }
 
+/** 跳转门店详情页（查看模式） */
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/business/store/form?id=${item.storeId}&mode=view` })
 }
 
+/** 跳转门店编辑页 */
 function goEdit(item) {
   uni.navigateTo({ url: `/pages/business/store/form?id=${item.storeId}&mode=edit` })
 }
 
+/** 跳转新增门店页 */
 function goAdd() {
   uni.navigateTo({ url: '/pages/business/store/form?mode=add' })
 }
@@ -265,6 +275,7 @@ function callPhone(phone) {
   uni.makePhoneCall({ phoneNumber: phone })
 }
 
+/** 删除门店，弹出确认框后调用删除接口，成功后刷新列表 */
 function handleDelete(item) {
   uni.showModal({
     title: '提示',

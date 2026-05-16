@@ -22,6 +22,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 首页 - 应用总览与快捷入口
+ * @description 展示通知栏、统计卡片、最近订单列表，支持下拉刷新获取最新数据
+ */
 import { ref, onMounted, computed } from 'vue'
 import HeaderNav from '@/components/home/HeaderNav.vue'
 import NoticeBar from '@/components/home/NoticeBar.vue'
@@ -37,6 +41,7 @@ const orderList = ref([])
 
 const userStore = useUserStore()
 
+/** 计算滚动区域高度，基于系统窗口高度适配不同设备 */
 const scrollHeight = computed(() => {
   const systemInfo = uni.getSystemInfoSync()
   return `${systemInfo.windowHeight}px`
@@ -46,6 +51,7 @@ onMounted(() => {
   loadHomeData()
 })
 
+/** 加载首页统计数据和最近归档订单列表，将归档数据映射为订单展示格式 */
 async function loadHomeData() {
   try {
     combinedStats.value = [
@@ -79,6 +85,7 @@ async function loadHomeData() {
   }
 }
 
+/** 下拉刷新处理，延迟800ms后重新加载数据并停止刷新动画 */
 function onPullDownRefresh() {
   isRefreshing.value = true
 
@@ -89,6 +96,7 @@ function onPullDownRefresh() {
   }, 800)
 }
 
+/** 根据来源类型编码返回中文标签（0-开单/1-操作/2-还款/3-手动） */
 function getSourceTypeLabel(type) {
   const map = { '0': '开单', '1': '操作', '2': '还款', '3': '手动' }
   return map[type] || (type || '未知')

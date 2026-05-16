@@ -158,6 +158,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 订单详情页 - 订单/操作记录详情与审核
+ * @description 支持两种详情模式：order（订单模式，展示品项/金额/审核）和
+ * operation（操作记录模式，展示满意度/照片/反馈），支持企业审核和财务审核操作
+ */
 import { ref, computed, onMounted } from 'vue'
 import { getSalesOrder, enterpriseAudit, financeAudit } from '@/api/business/salesOrder'
 import { getOperationRecord } from '@/api/business/operationRecord'
@@ -165,8 +170,10 @@ import { getOperationRecord } from '@/api/business/operationRecord'
 const orderInfo = ref({})
 const orderItems = ref([])
 const orderId = ref(null)
+/** 详情模式：order-订单 / operation-操作记录 */
 const detailMode = ref('order')
 
+/** 是否可审核：订单状态为待审核或企业已审时可操作 */
 const canAudit = computed(() => {
   const status = orderInfo.value.orderStatus || orderInfo.value.status
   return status === '0' || status === '1'
@@ -174,6 +181,7 @@ const canAudit = computed(() => {
 
 const satisfactionValue = ref(0)
 
+/** 订单状态编码映射为中文名称 */
 function getOrderStatusName(status) {
   if (!status && status !== 0) return '未知'
   const statusMap = {
@@ -205,6 +213,7 @@ function getStatusClass() {
 
 function formatTime(time) { if (!time) return ''; return String(time).substring(0, 16) }
 
+/** 计算品项单次价：方案价÷次数 */
 function getUnitPrice(item) {
   const qty = Number(item.quantity || item.count || 1)
   const price = Number(item.planPrice || item.plan_price || 0)
@@ -212,12 +221,14 @@ function getUnitPrice(item) {
   return (price / qty).toFixed(2)
 }
 
+/** 计算品项欠款金额：成交金额-实付金额，最小为0 */
 function getOwedAmount(item) {
   const deal = Number(item.dealAmount || item.deal_amount || 0)
   const paid = Number(item.paidAmount || item.paid_amount || 0)
   return Math.max(0, deal - paid).toFixed(2)
 }
 
+/** 根据图片路径拼接完整URL，处理相对路径和绝对路径 */
 function getImgUrl(path) {
   if (!path) return ''
   if (String(path).startsWith('http')) return path
@@ -225,11 +236,13 @@ function getImgUrl(path) {
   return '/profile/upload/' + path
 }
 
+/** 预览图片，使用uni.previewImage全屏查看 */
 function previewImage(current, urls) {
   const fullUrls = urls.map(url => getImgUrl(url)).filter(Boolean)
   uni.previewImage({ current: getImgUrl(current), urls: fullUrls })
 }
 
+/** 加载订单/操作记录详情，根据detailMode区分两种模式，操作记录模式需额外映射字段 */
 async function loadDetail() {
   if (!orderId.value) return
   try {
@@ -281,6 +294,7 @@ async function loadDetail() {
   finally { uni.hideLoading() }
 }
 
+/** 企业审核，弹出确认框后调用企业审核接口，成功后刷新详情 */
 async function handleEnterpriseAudit() {
   uni.showModal({ title: '提示', content: '确认企业审核通过?', success: async (res) => {
     if (res.confirm) {
@@ -290,6 +304,7 @@ async function handleEnterpriseAudit() {
   }})
 }
 
+/** 财务审核，弹出确认框后调用财务审核接口，成功后刷新详情 */
 async function handleFinanceAudit() {
   uni.showModal({ title: '提示', content: '确认财务审核通过?', success: async (res) => {
     if (res.confirm) {

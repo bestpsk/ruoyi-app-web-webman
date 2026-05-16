@@ -197,16 +197,23 @@
 </template>
 
 <script setup>
+/**
+ * @description 销售开单页 - 客户选择与业务入口
+ * @description 按企业→门店→客户三级筛选，支持企业/门店选择持久化（刷新不丢失），
+ * 提供客户搜索、新增客户弹窗、开单/操作/档案快捷跳转功能
+ */
 import { ref, computed, onMounted, reactive } from 'vue'
 import { listEnterprise } from '@/api/business/enterprise'
 import { searchStore } from '@/api/business/store'
 import { searchCustomer, addCustomer } from '@/api/business/customer'
 
+/** 本地存储键名，用于持久化企业和门店选择 */
 const STORAGE_KEYS = {
   enterprise: 'sales_selected_enterprise',
   store: 'sales_selected_store'
 }
 
+/** 将当前选中的企业和门店信息保存到本地存储，刷新后可恢复 */
 function saveSelectionToStorage() {
   const enterpriseData = currentEnterpriseId.value ? {
     enterpriseId: currentEnterpriseId.value,
@@ -230,6 +237,7 @@ function saveSelectionToStorage() {
   }
 }
 
+/** 从本地存储恢复企业和门店选择，校验数据有效性后自动加载客户列表 */
 async function loadSelectionFromStorage() {
   try {
     const cachedEnterprise = uni.getStorageSync(STORAGE_KEYS.enterprise)
@@ -279,9 +287,11 @@ const showEnterprisePicker = ref(false)
 const showStorePicker = ref(false)
 const enterpriseSearchKeyword = ref('')
 const storeSearchKeyword = ref('')
+/** 列表滚动区域高度 */
 const scrollHeight = ref(600)
 
 const showAddCustomerPopup = ref(false)
+/** 新增客户表单数据 */
 const customerForm = reactive({
   customerName: '',
   gender: '',
@@ -289,16 +299,20 @@ const customerForm = reactive({
   tag: '',
   remark: ''
 })
+/** 表单校验错误状态 */
 const formErrors = reactive({
   customerName: false
 })
+/** 性别选项配置 */
 const genderOptions = [
   { label: '男', value: '0', icon: 'man', color: '#3D6DF7' },
   { label: '女', value: '1', icon: 'woman', color: '#FF6B9D' }
 ]
 
+/** 搜索防抖定时器 */
 let searchTimer = null
 
+/** 根据搜索关键词过滤企业列表 */
 const filteredEnterpriseList = computed(() => {
   if (!enterpriseSearchKeyword.value) return enterpriseColumns.value
   const kw = enterpriseSearchKeyword.value.toLowerCase()
@@ -307,6 +321,7 @@ const filteredEnterpriseList = computed(() => {
   )
 })
 
+/** 根据搜索关键词过滤门店列表 */
 const filteredStoreList = computed(() => {
   if (!storeSearchKeyword.value) return storeColumns.value
   const kw = storeSearchKeyword.value.toLowerCase()
@@ -315,6 +330,7 @@ const filteredStoreList = computed(() => {
   )
 })
 
+/** 加载企业列表，仅获取状态为正常的企业 */
 async function loadEnterpriseOptions() {
   try {
     const response = await listEnterprise({ pageNum: 1, pageSize: 1000, status: '0' })
@@ -323,6 +339,7 @@ async function loadEnterpriseOptions() {
   } catch (e) { console.error('加载企业列表失败:', e) }
 }
 
+/** 选择企业后清空门店和客户，加载该企业下的门店列表并持久化选择 */
 async function onEnterpriseSelect(item) {
   currentEnterpriseId.value = item.enterpriseId
   currentEnterpriseName.value = item.enterpriseName
@@ -340,6 +357,7 @@ async function onEnterpriseSelect(item) {
   } catch (e) { console.error('加载门店列表失败:', e) }
 }
 
+/** 选择门店后持久化选择并加载该门店下的客户列表 */
 async function onStoreSelect(item) {
   currentStoreId.value = item.storeId
   currentStoreName.value = item.storeName
@@ -349,6 +367,7 @@ async function onStoreSelect(item) {
   loadCustomerList()
 }
 
+/** 根据关键词和企业/门店ID加载客户列表 */
 async function loadCustomerList() {
   if (!currentStoreId.value) return
   try {
@@ -358,37 +377,45 @@ async function loadCustomerList() {
   } catch (e) { console.error('加载客户列表失败:', e) }
 }
 
+/** 客户搜索防抖处理，500ms后触发搜索 */
 function onCustomerSearch() {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => loadCustomerList(), 500)
 }
 
+/** 跳转客户详情（订单页，不带storeId则只查看） */
 function goCustomerDetail(item) {
   uni.navigateTo({ url: `/pages/business/sales/order?customerId=${item.customerId}&storeName=${currentStoreName.value}&enterpriseName=${currentEnterpriseName.value}` })
 }
 
+/** 跳转客户开单页，携带门店信息 */
 function goCreateOrder(item) {
   uni.navigateTo({ url: `/pages/business/sales/order?customerId=${item.customerId}&storeId=${currentStoreId.value}&storeName=${currentStoreName.value}&enterpriseName=${currentEnterpriseName.value}` })
 }
 
+/** 跳转客户操作页，携带企业和门店信息 */
 function goCreateOperation(item) {
   uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${item.customerId}&customerName=${encodeURIComponent(item.customerName)}&storeId=${currentStoreId.value}&storeName=${encodeURIComponent(currentStoreName.value)}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${encodeURIComponent(currentEnterpriseName.value)}` })
 }
 
+/** 跳转客户档案页 */
 function goArchive(item) {
   uni.navigateTo({ url: `/pages/business/sales/archive?customerId=${item.customerId}&customerName=${encodeURIComponent(item.customerName)}&storeId=${currentStoreId.value}&storeName=${encodeURIComponent(currentStoreName.value)}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${encodeURIComponent(currentEnterpriseName.value)}` })
 }
 
+/** 打开新增客户弹窗并重置表单 */
 function openAddCustomerPopup() {
   resetCustomerForm()
   showAddCustomerPopup.value = true
 }
 
+/** 关闭新增客户弹窗，延迟重置表单避免闪烁 */
 function closeAddCustomerPopup() {
   showAddCustomerPopup.value = false
   setTimeout(() => resetCustomerForm(), 300)
 }
 
+/** 重置新增客户表单所有字段和校验状态 */
 function resetCustomerForm() {
   customerForm.customerName = ''
   customerForm.gender = ''
@@ -398,6 +425,7 @@ function resetCustomerForm() {
   formErrors.customerName = false
 }
 
+/** 校验新增客户表单，目前仅校验姓名必填 */
 function validateCustomerForm() {
   let isValid = true
   formErrors.customerName = !customerForm.customerName.trim()
@@ -405,6 +433,7 @@ function validateCustomerForm() {
   return isValid
 }
 
+/** 提交新增客户，校验通过后组装数据（含可选的性别/年龄/标签/备注）调用接口，成功后刷新列表 */
 async function submitAddCustomer() {
   if (!validateCustomerForm()) {
     uni.showToast({ title: '请填写必填项', icon: 'none' })
@@ -434,6 +463,7 @@ async function submitAddCustomer() {
   }
 }
 
+/** 悬浮按钮点击，校验已选企业和门店后打开新增客户弹窗 */
 function goAddCustomer() {
   if (!currentEnterpriseId.value || !currentStoreId.value) {
     uni.showToast({ title: '请先选择企业和门店', icon: 'none' })
@@ -442,6 +472,7 @@ function goAddCustomer() {
   openAddCustomerPopup()
 }
 
+/** 计算列表滚动区域高度，基于系统窗口高度减去搜索区域 */
 function calcScrollHeight() {
   const systemInfo = uni.getSystemInfoSync()
   scrollHeight.value = systemInfo.windowHeight - 200

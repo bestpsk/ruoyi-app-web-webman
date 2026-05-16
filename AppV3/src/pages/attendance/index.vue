@@ -184,6 +184,12 @@
 </template>
 
 <script setup>
+/**
+ * @description 考勤打卡页 - 坐班/外勤打卡
+ * @description 支持坐班打卡（GPS定位+逆地理编码）和外勤打卡（拍照+事由），
+ * 定位采用三级降级策略：uni.getLocation → navigator.geolocation → IP定位，
+ * 使用高德Web服务API进行逆地理编码，计算与工作地点距离，打卡成功后震动反馈
+ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getTodayRecord, clock, getTodayClockList, uploadAttendancePhoto, getUserAttendanceRule } from '@/api/attendance'
 import config from '@/config'
@@ -221,6 +227,7 @@ const showPhotoArea = computed(() => {
   return true
 })
 
+/** 是否可打卡：坐班需有定位或手动地址，外勤需有事由和照片 */
 const canClock = computed(() => {
   if (clockType.value === '0') {
     return !!(location.value.latitude || manualAddress.value.trim())
@@ -233,6 +240,7 @@ const canClock = computed(() => {
   return false
 })
 
+/** 打卡按钮文字：首次打卡显示"上班打卡"，否则显示"打卡" */
 const clockBtnText = computed(() => {
   if (!todayRecord.value || todayRecord.value.clockCount === 0) {
     return '上班打卡'
@@ -248,6 +256,7 @@ const clockBtnClass = computed(() => {
   return 'btn-clock-in'
 })
 
+/** 考勤状态标签：0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤 */
 const statusLabel = computed(() => {
   if (!todayRecord.value) return ''
   const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤' }
@@ -260,11 +269,17 @@ const statusClass = computed(() => {
   return map[todayRecord.value.attendanceStatus] || ''
 })
 
+/** 判断地址是否仅为经纬度坐标字符串（如"39.123,116.456"） */
 function isCoordinateOnly(str) {
   if (!str) return false
   return /^\s*[-+]?\d+\.\d+,\s*[-+]?\d+\.\d+\s*$/.test(str)
 }
 
+/**
+ * 格式化完整地址为简短展示文本，
+ * 优先使用POI名称，其次提取括号内容或区县/路名等有意义片段，
+ * 超过20字符截断并加省略号
+ */
 function formatShortAddress(fullAddress, poi) {
   if (poi && poi.length > 0) {
     return poi
@@ -321,6 +336,7 @@ function formatShortAddress(fullAddress, poi) {
   return address.length >= 2 ? address : (address + '...')
 }
 
+/** 使用Haversine公式计算两个经纬度坐标之间的距离（单位：米） */
 function calculateDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -332,6 +348,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   return Math.round(R * c)
 }
 
+/** 格式化距离：小于1km显示"X米"，大于等于1km显示"X.X公里" */
 function formatDistance(meters) {
   if (!meters && meters !== 0) return ''
   if (meters < 1000) {
@@ -345,6 +362,7 @@ function formatTime(time) {
   return time.substring(11, 16)
 }
 
+/** 更新当前日期时间和问候语（凌晨好/早上好/上午好/中午好/下午好/晚上好） */
 function updateDateTime() {
   const now = new Date()
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
@@ -359,6 +377,7 @@ function updateDateTime() {
   else greeting.value = '晚上好'
 }
 
+/** 发起定位请求，先尝试uni.getLocation，5秒超时后降级 */
 function getLocation() {
   locationLoading.value = true
   locationError.value = false
@@ -366,6 +385,7 @@ function getLocation() {
   doGetLocation()
 }
 
+/** 定位成功回调，保存坐标、计算与工作地距离、触发逆地理编码 */
 function handleLocationSuccess(lat, lng) {
   location.value.latitude = lat
   location.value.longitude = lng
@@ -386,6 +406,7 @@ function handleLocationSuccess(lat, lng) {
   reverseGeocode(lat, lng)
 }
 
+/** IP定位降级方案，通过高德IP定位接口获取城市级别位置 */
 async function ipGeolocation() {
   try {
     const key = AMAP_WEB_SERVICE_KEY
@@ -407,6 +428,7 @@ async function ipGeolocation() {
   return false
 }
 
+/** 定位失败处理，标记错误状态并提示用户手动输入地址 */
 function showLocationError(error) {
   locationLoading.value = false
   locationError.value = true
@@ -415,6 +437,7 @@ function showLocationError(error) {
   console.warn('定位失败:', error?.message || '未知错误')
 }
 
+/** 确认手动输入地址，替代GPS定位结果 */
 function confirmManualAddress() {
   if (manualAddress.value.trim()) {
     location.value.address = manualAddress.value.trim()
@@ -427,6 +450,10 @@ function confirmManualAddress() {
   }
 }
 
+/**
+ * 执行定位，设置5秒超时定时器，
+ * 超时或uni.getLocation失败后调用降级方案fallbackGetLocation
+ */
 function doGetLocation() {
   clearTimeout(locationTimer)
   locationTimer = setTimeout(() => {
@@ -450,6 +477,10 @@ function doGetLocation() {
   })
 }
 
+/**
+ * 定位降级方案：优先使用navigator.geolocation（H5浏览器定位），
+ * 不支持则尝试IP定位，全部失败则标记定位失败
+ */
 async function fallbackGetLocation() {
   if (typeof navigator !== 'undefined' && navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -475,6 +506,7 @@ async function fallbackGetLocation() {
   }
 }
 
+/** 调用高德逆地理编码API，将经纬度转换为详细地址和POI信息 */
 async function reverseGeocode(lat, lng) {
   geocodingLoading.value = true
   try {
@@ -505,6 +537,7 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
+/** 加载今日考勤记录，获取打卡状态和打卡次数 */
 async function loadTodayRecord() {
   try {
     const res = await getTodayRecord()
@@ -517,6 +550,7 @@ async function loadTodayRecord() {
   }
 }
 
+/** 加载今日打卡流水列表 */
 async function loadTodayClockList() {
   try {
     const res = await getTodayClockList()
@@ -526,6 +560,7 @@ async function loadTodayClockList() {
   }
 }
 
+/** 加载用户考勤规则，包含工作地点坐标用于距离计算 */
 async function loadUserRule() {
   try {
     ruleLoading.value = true
@@ -542,6 +577,7 @@ async function loadUserRule() {
   }
 }
 
+/** 拍照并上传，外勤打卡时必须拍照 */
 function takePhoto() {
   uni.chooseImage({
     count: 1,
@@ -559,6 +595,10 @@ function takePhoto() {
   })
 }
 
+/**
+ * 执行打卡，坐班模式校验定位/地址，外勤模式校验事由和照片，
+ * 打卡成功后震动反馈、清空表单、刷新今日记录和打卡列表
+ */
 async function handleClock() {
   if (clockType.value === '0') {
     if (!location.value.latitude && !manualAddress.value) {
@@ -653,6 +693,7 @@ function getClockTagClass(index) {
   return 'type-supplement'
 }
 
+/** 打卡按钮点击处理，校验不通过时提示具体原因，通过则执行打卡 */
 function handleClockClick() {
   if (!canClock.value) {
     if (clockType.value === '0') {

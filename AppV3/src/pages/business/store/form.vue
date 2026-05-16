@@ -132,12 +132,18 @@
 </template>
 
 <script setup>
+/**
+ * @description 门店表单页 - 新增/编辑/查看门店
+ * @description 需先选择所属企业，包含门店名称、负责人、营业时间（拆分开始/结束）、
+ * 微信号、常来顾客数等字段，提交时将开始/结束时间合并为businessHours
+ */
 import { ref, reactive, onMounted } from 'vue'
 import { getStore, addStore, updateStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
 
 const submitting = ref(false)
 const showEnterprisePicker = ref(false)
+/** 页面模式：add/edit/view */
 const mode = ref('add')
 const storeId = ref(null)
 const enterpriseColumns = ref([])
@@ -161,6 +167,7 @@ const form = reactive({
   remark: ''
 })
 
+/** 企业选择确认，更新表单中的企业ID和名称 */
 function onEnterpriseConfirm(e) {
   const item = e.value[0]
   form.enterpriseId = item.enterpriseId
@@ -168,6 +175,7 @@ function onEnterpriseConfirm(e) {
   showEnterprisePicker.value = false
 }
 
+/** 加载企业列表供门店表单选择所属企业 */
 async function loadEnterpriseOptions() {
   try {
     const response = await listEnterprise({ pageNum: 1, pageSize: 1000, status: '0' })
@@ -211,6 +219,7 @@ async function loadDetail() {
   } finally { uni.hideLoading() }
 }
 
+/** 提交门店表单，校验必填项后将开始/结束时间合并为businessHours，根据是否有ID区分新增和修改 */
 async function submitForm() {
   if (!form.enterpriseId) { uni.showToast({ title: '请选择所属企业', icon: 'none' }); return }
   if (!form.storeName) { uni.showToast({ title: '请输入门店名称', icon: 'none' }); return }
@@ -251,6 +260,7 @@ async function submitForm() {
   } finally { submitting.value = false }
 }
 
+/** 删除门店，弹出确认框后调用删除接口，成功后返回列表页 */
 function handleDelete() {
   if (!storeId.value) return
   uni.showModal({

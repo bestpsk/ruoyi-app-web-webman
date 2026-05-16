@@ -16,6 +16,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 修改密码页 - 用户密码更新
+ * @description 提供旧密码验证和新密码设置功能，包含密码长度和一致性校验
+ */
 import { ref } from 'vue'
 import { updateUserPwd } from '@/api/system/user'
 
@@ -26,6 +30,7 @@ const user = ref({
   confirmPassword: undefined
 })
 
+/** 提交密码修改表单，校验旧密码非空、新密码长度6-20位、两次密码一致后调用接口更新 */
 function submit() {
   if (!user.value.oldPassword) {
     uni.showToast({ title: '旧密码不能为空', icon: 'none' })

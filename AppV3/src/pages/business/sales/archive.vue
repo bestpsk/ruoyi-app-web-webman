@@ -128,6 +128,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 客户档案页 - 档案记录查看与新增
+ * @description 展示客户所有档案记录（开单/操作/还款/手动），支持按来源类型筛选、
+ * 新增手动档案（含方案品项、满意度、照片）、删除手动档案、图片预览
+ */
 import { ref, reactive } from 'vue'
 import { listArchive, addArchive, deleteArchive } from '@/api/business/archive'
 import { listEmployeeConfig } from '@/api/business/employeeConfig'
@@ -141,6 +146,7 @@ const enterpriseId = ref('')
 const enterpriseName = ref('')
 
 const archiveList = ref([])
+/** 档案来源类型筛选（空=全部） */
 const filterType = ref('')
 const showAddDrawer = ref(false)
 const showDatePicker = ref(false)
@@ -149,6 +155,7 @@ const datePickerVal = ref(Number(new Date()))
 const submitting = ref(false)
 const operatorList = ref([])
 
+/** 新增档案表单数据 */
 const form = reactive({
   archiveDate: '',
   archiveType: 'sales',
@@ -161,26 +168,31 @@ const form = reactive({
   remark: ''
 })
 
+/** 档案来源类型编码映射为中文标签 */
 function getSourceLabel(type) {
   const m = { '0': '开单', '1': '操作', '2': '还款', '3': '手动' }
   return m[type] || '未知'
 }
 
+/** 档案类型编码映射为中文标签 */
 function getTypeLabel(v) {
   const m = { 'sales': '销售', 'after_sales': '售后' }
   return m[v] || v || ''
 }
 
+/** 解析JSON格式的方案品项字符串，失败返回空数组 */
 function parsePlanItems(s) {
   if (!s) return []
   try { return JSON.parse(s) } catch { return [] }
 }
 
+/** 将方案品项格式化为"品项名×次数"的展示文本 */
 function formatPlanItems(s) {
   const arr = parsePlanItems(s)
   return arr.map((pi, i) => pi.name + '×' + pi.quantity + (i < arr.length - 1 ? '、' : '')).join('')
 }
 
+/** 根据图片路径拼接完整URL，处理相对路径和绝对路径 */
 function getImgUrl(path) {
   if (!path) return ''
   if (String(path).startsWith('http')) return path
@@ -188,6 +200,7 @@ function getImgUrl(path) {
   return config.baseUrl + '/profile/upload/' + path
 }
 
+/** 解析照片字段，优先尝试JSON解析，失败则按逗号分隔 */
 function parsePhotos(s) {
   if (!s) return []
   try {
@@ -198,10 +211,12 @@ function parsePhotos(s) {
   }
 }
 
+/** 预览图片，使用uni.previewImage全屏查看 */
 function previewImg(cur, urls) {
   uni.previewImage({ current: getImgUrl(cur), urls: urls.map(u => getImgUrl(u)).filter(Boolean) })
 }
 
+/** 加载档案列表，支持按来源类型筛选 */
 async function loadList() {
   if (!customerId.value) return
   try {
@@ -215,11 +230,13 @@ async function loadList() {
   }
 }
 
+/** 切换来源类型筛选并重新加载列表 */
 function switchFilter(t) {
   filterType.value = t
   loadList()
 }
 
+/** 加载员工列表作为操作人选项 */
 async function loadOperators() {
   try {
     const res = await listEmployeeConfig({ pageNum: 1, pageSize: 100 })
@@ -235,6 +252,7 @@ async function loadOperators() {
   }
 }
 
+/** 打开新增档案抽屉，初始化表单默认值并加载操作人列表 */
 function openAddDrawer() {
   form.archiveDate = new Date().toISOString().slice(0, 10)
   form.archiveType = 'sales'
@@ -250,26 +268,31 @@ function openAddDrawer() {
   showAddDrawer.value = true
 }
 
+/** 添加一行空白方案品项 */
 function addPiRow() {
   form.planItems.push({ name: '', quantity: 1 })
 }
 
+/** 删除指定方案品项行 */
 function removePi(idx) {
   form.planItems.splice(idx, 1)
 }
 
+/** 选择操作人后更新表单 */
 function onOpSelect(e) {
   form.operatorUserName = e.name
   form.operatorUserId = e.userId
   showOpPicker.value = false
 }
 
+/** 日期选择确认，格式化为YYYY-MM-DD */
 function onDateConfirm(e) {
   const d = new Date(Number(e))
   form.archiveDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
   showDatePicker.value = false
 }
 
+/** 提交新增档案，校验日期后组装数据（含方案品项、满意度等）调用接口，成功后刷新列表 */
 async function submitForm() {
   if (!form.archiveDate) return uni.showToast({ title: '请选择档案日期', icon: 'none' })
   submitting.value = true
@@ -301,6 +324,7 @@ async function submitForm() {
   }
 }
 
+/** 删除手动档案，弹出确认框后调用删除接口，仅允许删除来源为"手动"的档案 */
 function handleDelete(item) {
   uni.showModal({
     title: '提示',

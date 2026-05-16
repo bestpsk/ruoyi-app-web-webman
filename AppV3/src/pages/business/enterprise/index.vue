@@ -211,6 +211,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 企业列表页 - 企业管理入口
+ * @description 展示企业列表，支持关键词搜索（企业名/老板/电话）、按类型/级别/状态筛选、
+ * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除企业
+ */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listEnterprise, delEnterprise } from '@/api/business/enterprise'
 
@@ -221,8 +226,10 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const scrollHeight = ref(600)
 
+/** 搜索防抖定时器 */
 let searchTimer = null
 
+/** 是否有激活的筛选条件 */
 const hasActiveFilters = computed(() => {
   return queryParams.enterpriseType || queryParams.enterpriseLevel ||
          (queryParams.status !== '' && queryParams.status !== undefined)
@@ -253,11 +260,13 @@ const levelOptions = ref([
   { label: 'D级', value: '4' }
 ])
 
+/** 企业类型编码映射为中文名称（1-直营店/2-加盟店/3-合作店） */
 function getTypeName(value) {
   const item = typeOptions.value.find(t => t.value === value)
   return item ? item.label : '-'
 }
 
+/** 企业级别编码映射为中文名称（1-A级/2-B级/3-C级/4-D级） */
 function getLevelName(value) {
   const item = levelOptions.value.find(l => l.value === value)
   return item ? item.label : '-'
@@ -268,6 +277,7 @@ function formatTime(time) {
   return time.substring(0, 10)
 }
 
+/** 加载企业列表，支持分页和关键词搜索（搜索时同时匹配企业名/老板/电话），isRefresh为true时重置到第一页 */
 async function getList(isRefresh = false) {
   if (loading.value) return
 
@@ -311,6 +321,7 @@ async function getList(isRefresh = false) {
   }
 }
 
+/** 加载更多，翻页并请求下一页数据 */
 function loadMore() {
   if (loading.value || loadStatus.value === 'nomore') return
   loadStatus.value = 'loading'
@@ -327,6 +338,7 @@ function handleSearch() {
   getList(true)
 }
 
+/** 搜索输入防抖处理，500ms后触发搜索 */
 function onSearchInput() {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
@@ -359,18 +371,21 @@ function clearFilter(field) {
   getList(true)
 }
 
+/** 跳转企业详情页（查看模式） */
 function goDetail(item) {
   uni.navigateTo({
     url: `/pages/business/enterprise/form?id=${item.enterpriseId}&mode=view`
   })
 }
 
+/** 跳转企业编辑页 */
 function goEdit(item) {
   uni.navigateTo({
     url: `/pages/business/enterprise/form?id=${item.enterpriseId}&mode=edit`
   })
 }
 
+/** 跳转新增企业页 */
 function goAdd() {
   uni.navigateTo({
     url: '/pages/business/enterprise/form?mode=add'
@@ -382,6 +397,7 @@ function callPhone(phone) {
   uni.makePhoneCall({ phoneNumber: phone })
 }
 
+/** 删除企业，弹出确认框后调用删除接口，成功后刷新列表 */
 function handleDelete(item) {
   uni.showModal({
     title: '提示',
